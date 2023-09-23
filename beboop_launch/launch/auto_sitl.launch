@@ -1,0 +1,13 @@
+<launch>
+    <node pkg="ros_tcp_endpoint" exec="default_server_endpoint">
+        <param name="ROS_IP" value="192.168.1.131"/>
+        <param name="ROS_TCP_PORT" value="10000"/>
+    </node>
+    <node pkg="beboop_vision" exec="beboop_vision">
+        <param name="is_sitl" value="true"/>
+    </node>
+    <node pkg="beboop_launch" exec="vs_control">
+        <param name="kp" value="0.35"/>
+        <param name="speed" value="0.3"/>
+    </node>
+</launch>

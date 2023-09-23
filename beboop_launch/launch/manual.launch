@@ -1,0 +1,17 @@
+<launch>
+    <node pkg="beboop_launch" exec="beboop_motor_interface"/>
+    <node pkg="teleop_twist_joy" exec="teleop_node">
+        <!-- Right-Handed 1 stick configuration -->
+        <!-- <param name="enable_button" value="5"/>
+        <param name="axis_linear.x" value="4"/>
+        <param name="axis_angular.yaw" value="3"/> -->
+
+        <!-- 2 stick configuration -->
+        <param name="enable_button" value="5"/>
+        <param name="axis_linear.x" value="4"/>
+        <param name="axis_angular.yaw" value="0"/>
+    </node>
+    <node pkg="joy" exec="joy_node">
+        <param name="autorepeat_rate" value="20.0"/>
+    </node>
+</launch>

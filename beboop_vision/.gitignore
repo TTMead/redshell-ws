@@ -1,0 +1,2 @@
+# Ignore test images (will have to be changed if any files beginning with the word 'test' are added.
+test*
