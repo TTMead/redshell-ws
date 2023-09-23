@@ -1,7 +1,7 @@
-#include "beboop_vision.hpp"
+#include "track_error_driver.hpp"
 
 
-BeboopVision::BeboopVision() : Node("beboop_vision")
+TrackErrorDriver::TrackErrorDriver() : Node("track_error_driver")
 {
 	_error_publisher = this->create_publisher<std_msgs::msg::Float32>("track_error", 10);
 
@@ -10,7 +10,7 @@ BeboopVision::BeboopVision() : Node("beboop_vision")
 		// In SITL receive image feed from the ROS topic
 		_front_camera_sub = this->create_subscription<sensor_msgs::msg::Image>(
 			"/front_camera", 10, 
-			std::bind(&BeboopVision::front_camera_callback, this, std::placeholders::_1)
+			std::bind(&TrackErrorDriver::front_camera_callback, this, std::placeholders::_1)
 		);
 
 	} else {
@@ -35,7 +35,7 @@ BeboopVision::BeboopVision() : Node("beboop_vision")
 }
 
 void
-BeboopVision::front_camera_callback(const sensor_msgs::msg::Image::SharedPtr msg)
+TrackErrorDriver::front_camera_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 {
 	cv_bridge::CvImagePtr cv_image_ptr = cv_bridge::toCvCopy(*msg, sensor_msgs::image_encodings::RGBA8);
 
@@ -47,7 +47,7 @@ BeboopVision::front_camera_callback(const sensor_msgs::msg::Image::SharedPtr msg
 
 
 int
-BeboopVision::run()
+TrackErrorDriver::run()
 {
 	_video_capture >> _image_frame;
 
@@ -63,7 +63,7 @@ BeboopVision::run()
 
 
 cv::Point
-BeboopVision::get_centroid(cv::Mat &mask)
+TrackErrorDriver::get_centroid(cv::Mat &mask)
 {
 	cv::Moments m = cv::moments(mask, true);
 	cv::Point centroid(m.m10/m.m00, m.m01/m.m00);
@@ -77,7 +77,7 @@ BeboopVision::get_centroid(cv::Mat &mask)
 
 
 void
-BeboopVision::analyse_frame()
+TrackErrorDriver::analyse_frame()
 {
 	cv::imshow("Image", _image_frame);
 
@@ -138,6 +138,6 @@ BeboopVision::analyse_frame()
 int main(int argc, char * argv[])
 {
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<BeboopVision>());
+	rclcpp::spin(std::make_shared<TrackErrorDriver>());
 	return 0;
 }

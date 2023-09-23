@@ -16,9 +16,9 @@ set(dependencies rclcpp OpenCV sensor_msgs cv_bridge)
 
 
 # Install executables
-add_executable(beboop_vision src/beboop_vision.cpp)
-ament_target_dependencies(beboop_vision ${dependencies})
-install(TARGETS beboop_vision
+add_executable(track_error_driver src/track_error_driver.cpp)
+ament_target_dependencies(track_error_driver ${dependencies})
+install(TARGETS track_error_driver
         DESTINATION lib/${PROJECT_NAME})
 
 

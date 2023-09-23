@@ -4,10 +4,10 @@
 #include "std_msgs/msg/float32.hpp"
 #include <cv_bridge/cv_bridge.h>
 
-class BeboopVision : public rclcpp::Node
+class TrackErrorDriver : public rclcpp::Node
 {
 	public:
-		BeboopVision();
+		TrackErrorDriver();
 
 		const int VIDEO_CAMERA_ID = 0;
 	
