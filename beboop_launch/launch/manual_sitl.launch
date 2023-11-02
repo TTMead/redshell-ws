@@ -1,6 +1,6 @@
 <launch>
     <node pkg="ros_tcp_endpoint" exec="default_server_endpoint">
-        <param name="ROS_IP" value="192.168.1.131"/>
+        <param name="ROS_IP" value="127.0.0.1"/>
         <param name="ROS_TCP_PORT" value="10000"/>
     </node>
     <node pkg="teleop_twist_joy" exec="teleop_node">
