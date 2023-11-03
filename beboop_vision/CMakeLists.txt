@@ -21,6 +21,11 @@ ament_target_dependencies(track_error_driver ${dependencies})
 install(TARGETS track_error_driver
         DESTINATION lib/${PROJECT_NAME})
 
+add_executable(potential_field_driver src/potential_field_driver.cpp src/vision_driver.cpp)
+ament_target_dependencies(potential_field_driver ${dependencies})
+install(TARGETS potential_field_driver
+        DESTINATION lib/${PROJECT_NAME})
+
 
 # Resolve and install include filepaths
 include_directories(
