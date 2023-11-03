@@ -16,7 +16,7 @@ set(dependencies rclcpp OpenCV sensor_msgs cv_bridge)
 
 
 # Install executables
-add_executable(track_error_driver src/track_error_driver.cpp)
+add_executable(track_error_driver src/track_error_driver.cpp src/vision_driver.cpp)
 ament_target_dependencies(track_error_driver ${dependencies})
 install(TARGETS track_error_driver
         DESTINATION lib/${PROJECT_NAME})
