@@ -1,5 +1,5 @@
 #include "vision_driver.hpp"
-#include "std_msgs/msg/u_int8_multi_array.hpp"
+#include "nav_msgs/msg/occupancy_grid.hpp"
 
 class PotentialFieldDriver : public VisionDriver
 {
@@ -24,5 +24,5 @@ class PotentialFieldDriver : public VisionDriver
 
         int8_t costmap[COSTMAP_LENGTH];
 
-        rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr _potential_field_publisher;
+        rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _potential_field_publisher;
 };

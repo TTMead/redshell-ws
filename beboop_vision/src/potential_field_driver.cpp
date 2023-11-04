@@ -4,7 +4,7 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
 {
     _initialise_costmap();
 
-    _potential_field_publisher = this->create_publisher<std_msgs::msg::UInt8MultiArray>("potential_field", 10);
+    _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field", 10);
 }
 
 void
@@ -17,17 +17,23 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
 void
 PotentialFieldDriver::publish()
 {
-    std_msgs::msg::UInt8MultiArray msg;
+    nav_msgs::msg::OccupancyGrid msg;
+
+    msg.header.stamp = rclcpp::Node::now();
+    msg.header.frame_id = "base_link";
+    msg.info.resolution = 0.1; // [m/cell]
+    msg.info.width = COSTMAP_WIDTH;
+    msg.info.height = COSTMAP_HEIGHT;
+    msg.info.origin.position.x = 0;
+    msg.info.origin.position.y = 0;
+    msg.info.origin.position.z = 0;
+    msg.info.origin.orientation.x = 0;
+    msg.info.origin.orientation.y = 0;
+    msg.info.origin.orientation.z = 0;
+    msg.info.origin.orientation.w = 1;
 
     msg.data.clear();
     msg.data.insert(msg.data.end(), &costmap[0], &costmap[COSTMAP_LENGTH]);
-    msg.layout.data_offset = 0;
-    msg.layout.dim[0].label = "height";
-    msg.layout.dim[0].size = COSTMAP_HEIGHT;
-    msg.layout.dim[0].stride = COSTMAP_HEIGHT * COSTMAP_WIDTH;
-    msg.layout.dim[1].label = "width";
-    msg.layout.dim[1].size = COSTMAP_WIDTH;
-    msg.layout.dim[1].stride = COSTMAP_WIDTH;
 
     _potential_field_publisher->publish(msg);
 }

@@ -12,8 +12,9 @@ find_package(OpenCV REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
-set(dependencies rclcpp OpenCV sensor_msgs cv_bridge std_msgs)
+set(dependencies rclcpp OpenCV sensor_msgs cv_bridge std_msgs nav_msgs)
 
 
 # Install executables
