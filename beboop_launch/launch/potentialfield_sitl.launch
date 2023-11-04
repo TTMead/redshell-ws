@@ -1,0 +1,23 @@
+<launch>
+    <node pkg="ros_tcp_endpoint" exec="default_server_endpoint">
+        <param name="ROS_IP" value="127.0.0.1"/>
+        <param name="ROS_TCP_PORT" value="10000"/>
+    </node>
+    <node pkg="beboop_vision" exec="potential_field_driver">
+        <param name="is_sitl" value="true"/>
+    </node>
+    <node pkg="teleop_twist_joy" exec="teleop_node">
+        <!-- Right-Handed 1 stick configuration -->
+        <!-- <param name="enable_button" value="5"/>
+        <param name="axis_linear.x" value="4"/>
+        <param name="axis_angular.yaw" value="3"/> -->
+
+        <!-- 2 stick configuration -->
+        <param name="enable_button" value="5"/>
+        <param name="axis_linear.x" value="4"/>
+        <param name="axis_angular.yaw" value="0"/>
+    </node>
+    <node pkg="joy" exec="joy_node">
+        <param name="autorepeat_rate" value="20.0"/>
+    </node>
+</launch>

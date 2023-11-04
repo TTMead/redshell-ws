@@ -10,8 +10,50 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
 void
 PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
 {
-    // ToDo: Implement frame converison to costmap
-    (void)image_frame;
+	// Convert the frame to hsv
+	cv::cvtColor(image_frame, image_frame, cv::COLOR_BGR2HSV);
+
+	// Threshold the frame by colour
+	cv::Mat yellow_frame, blue_frame;
+	cv::inRange(image_frame, cv::Scalar(25, 30, 0), cv::Scalar(35, 255, 255), yellow_frame);
+	cv::inRange(image_frame, cv::Scalar(90, 50, 190), cv::Scalar(130, 250, 250), blue_frame);
+
+	// Apply median blur to each frame
+	cv::medianBlur(yellow_frame, yellow_frame, 7);
+	cv::medianBlur(blue_frame, blue_frame, 7);
+
+    clear();
+    add_bin_image_to_occupancy(yellow_frame);
+    add_bin_image_to_occupancy(blue_frame);
+    
+    set_tile(0, 0, 5);
+
+
+    publish();
+}
+
+void
+PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
+{
+    std::vector<cv::Point> locations;
+    cv::findNonZero(binary_image, locations);
+
+    RCLCPP_INFO(this->get_logger(), "num pix: [%d]", locations.size());
+
+    for (cv::Point point : locations)
+    {
+        uint32_t row_index = scale(point.y, 0, binary_image.rows, 0, COSTMAP_HEIGHT-1);
+        uint32_t column_index = scale(point.x, 0, binary_image.cols, 0, COSTMAP_WIDTH-1);
+
+        uint8_t new_value = get_tile(row_index, column_index) + 80;
+        set_tile(row_index, column_index, new_value);
+    }
+}
+
+uint32_t
+PotentialFieldDriver::scale(uint32_t value, uint32_t old_min, uint32_t old_max, uint32_t new_min, uint32_t new_max)
+{
+    return round(((static_cast<float>(value - old_min) / static_cast<float>(old_max - old_min)) * (new_max - new_min)) + new_min);
 }
 
 void
@@ -20,8 +62,9 @@ PotentialFieldDriver::publish()
     nav_msgs::msg::OccupancyGrid msg;
 
     msg.header.stamp = rclcpp::Node::now();
-    msg.header.frame_id = "base_link";
-    msg.info.resolution = 0.1; // [m/cell]
+    msg.header.frame_id = "map";
+    float costmap_resolution = 0.05;
+    msg.info.resolution = costmap_resolution; // [m/cell]
     msg.info.width = COSTMAP_WIDTH;
     msg.info.height = COSTMAP_HEIGHT;
     msg.info.origin.position.x = 0;
@@ -42,12 +85,36 @@ PotentialFieldDriver::publish()
 void
 PotentialFieldDriver::set_tile(uint32_t row_index, uint32_t column_index, int8_t value)
 {
+    if (row_index >= COSTMAP_HEIGHT)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
+        return;
+    }
+
+    if (column_index >= COSTMAP_WIDTH)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
+        return;
+    }
+
     costmap[column_index + (row_index*COSTMAP_WIDTH)] = value;
 }
 
 int8_t
 PotentialFieldDriver::get_tile(uint32_t row_index, uint32_t column_index)
 {
+    if (row_index >= COSTMAP_HEIGHT)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
+        return 0;
+    }
+
+    if (column_index >= COSTMAP_WIDTH)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
+        return 0;
+    }
+
     return costmap[row_index + (column_index*COSTMAP_WIDTH)];
 }
 
@@ -92,6 +159,16 @@ PotentialFieldDriver::translate(int32_t x_translation, int32_t y_translation)
                 set_tile(row_index, column_index, get_tile(old_row_index, old_column_index));
             }
         }
+    }
+}
+
+
+void
+PotentialFieldDriver::clear()
+{
+    for (uint32_t i = 0; i < COSTMAP_LENGTH; i++)
+    {
+        costmap[i] = 0;
     }
 }
 
