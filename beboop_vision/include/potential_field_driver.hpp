@@ -23,7 +23,21 @@ class PotentialFieldDriver : public VisionDriver
         void analyse_frame(cv::Mat image_frame) override;
 
         void _initialise_costmap();
+
+        static constexpr uint8_t BLUE_THRESHOLD_H_LOW = 90;
+        static constexpr uint8_t BLUE_THRESHOLD_H_HIGH = 130;
+        static constexpr uint8_t BLUE_THRESHOLD_S_LOW = 50;
+        static constexpr uint8_t BLUE_THRESHOLD_S_HIGH = 250;
+        static constexpr uint8_t BLUE_THRESHOLD_V_LOW = 190;
+        static constexpr uint8_t BLUE_THRESHOLD_V_HIGH = 250;
         
+        static constexpr uint8_t YELLOW_THRESHOLD_H_LOW = 25;
+        static constexpr uint8_t YELLOW_THRESHOLD_H_HIGH = 35;
+        static constexpr uint8_t YELLOW_THRESHOLD_S_LOW = 30;
+        static constexpr uint8_t YELLOW_THRESHOLD_S_HIGH = 255;
+        static constexpr uint8_t YELLOW_THRESHOLD_V_LOW = 0;
+        static constexpr uint8_t YELLOW_THRESHOLD_V_HIGH = 255;
+
         static constexpr uint32_t COSTMAP_WIDTH = 200;
         static constexpr uint32_t COSTMAP_HEIGHT = 200;
         static constexpr uint64_t COSTMAP_LENGTH = COSTMAP_WIDTH * COSTMAP_HEIGHT;

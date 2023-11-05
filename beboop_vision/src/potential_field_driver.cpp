@@ -16,19 +16,27 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
 
 	// Threshold the frame by colour
 	cv::Mat yellow_frame, blue_frame;
-	cv::inRange(image_frame, cv::Scalar(25, 30, 0), cv::Scalar(35, 255, 255), yellow_frame);
-	cv::inRange(image_frame, cv::Scalar(90, 50, 190), cv::Scalar(130, 250, 250), blue_frame);
+	cv::inRange(image_frame, 
+                cv::Scalar(YELLOW_THRESHOLD_H_LOW, YELLOW_THRESHOLD_S_LOW, YELLOW_THRESHOLD_V_LOW),
+                cv::Scalar(YELLOW_THRESHOLD_H_HIGH, YELLOW_THRESHOLD_S_HIGH, YELLOW_THRESHOLD_V_HIGH), 
+                yellow_frame);
+	cv::inRange(image_frame, 
+                cv::Scalar(BLUE_THRESHOLD_H_LOW, BLUE_THRESHOLD_S_LOW, BLUE_THRESHOLD_V_LOW),
+                cv::Scalar(BLUE_THRESHOLD_H_HIGH, BLUE_THRESHOLD_S_HIGH, BLUE_THRESHOLD_V_HIGH), 
+                blue_frame);
 
-	// Apply median blur to each frame
-	cv::medianBlur(yellow_frame, yellow_frame, 7);
-	cv::medianBlur(blue_frame, blue_frame, 7);
+    // Combine the image frames and apply post processing
+    cv::Mat track_frame = yellow_frame + blue_frame;
+	cv::medianBlur(track_frame, track_frame, 7);
 
-    cv::imshow("Combined Threshold", blue_frame + yellow_frame);
-	cv::waitKey(1);
+    if (this->get_parameter("is_sitl").as_bool())
+    {
+        cv::imshow("Combined Threshold", track_frame);
+        cv::waitKey(1);
+    }
 
     clear();
-    add_bin_image_to_occupancy(yellow_frame);
-    add_bin_image_to_occupancy(blue_frame);
+    add_bin_image_to_occupancy(track_frame);
 
     publish();
 }
