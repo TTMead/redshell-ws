@@ -27,9 +27,9 @@ class PotentialFieldDriver : public VisionDriver
         static constexpr uint8_t BLUE_THRESHOLD_H_LOW = 90;
         static constexpr uint8_t BLUE_THRESHOLD_H_HIGH = 130;
         static constexpr uint8_t BLUE_THRESHOLD_S_LOW = 50;
-        static constexpr uint8_t BLUE_THRESHOLD_S_HIGH = 250;
-        static constexpr uint8_t BLUE_THRESHOLD_V_LOW = 190;
-        static constexpr uint8_t BLUE_THRESHOLD_V_HIGH = 250;
+        static constexpr uint8_t BLUE_THRESHOLD_S_HIGH = 255;
+        static constexpr uint8_t BLUE_THRESHOLD_V_LOW = 150;
+        static constexpr uint8_t BLUE_THRESHOLD_V_HIGH = 255;
         
         static constexpr uint8_t YELLOW_THRESHOLD_H_LOW = 25;
         static constexpr uint8_t YELLOW_THRESHOLD_H_HIGH = 35;
