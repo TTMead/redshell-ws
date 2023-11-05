@@ -29,9 +29,6 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
     clear();
     add_bin_image_to_occupancy(yellow_frame);
     add_bin_image_to_occupancy(blue_frame);
-    
-    set_tile(0, 0, 5);
-
 
     publish();
 }
