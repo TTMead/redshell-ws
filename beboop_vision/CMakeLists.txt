@@ -28,6 +28,11 @@ ament_target_dependencies(potential_field_driver ${dependencies})
 install(TARGETS potential_field_driver
         DESTINATION lib/${PROJECT_NAME})
 
+add_executable(image_capture src/image_capture.cpp)
+ament_target_dependencies(image_capture ${dependencies})
+install(TARGETS image_capture
+        DESTINATION lib/${PROJECT_NAME})
+
 
 # Resolve and install include filepaths
 include_directories(
