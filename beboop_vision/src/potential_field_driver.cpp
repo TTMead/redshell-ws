@@ -56,10 +56,9 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
         uint32_t column_index = std::round(y_m / COSTMAP_RESOLUTION) + (COSTMAP_WIDTH/2);
 
         // Ignore readings that go outside our defined costmap range
-        if (row_index > COSTMAP_HEIGHT || column_index > COSTMAP_WIDTH)
+        if (row_index >= COSTMAP_HEIGHT || column_index >= COSTMAP_WIDTH)
         {
-            RCLCPP_INFO(this->get_logger(), "Out of bounds: [%f, %f]", x_m, y_m);
-            return;
+            continue;
         }
 
         uint8_t new_value = get_tile(row_index, column_index) + 80;
