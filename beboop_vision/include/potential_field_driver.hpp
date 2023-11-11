@@ -17,7 +17,7 @@ class PotentialFieldDriver : public VisionDriver
         void clear();
 
         // Converts a point in pixels to a point in meters using a calibrated empirical model
-        void pixels_to_m(float x_px, float y_px, float &x_m, float &y_m);
+        void pixels_to_m(double x_px, double y_px, double &x_m, double &y_m);
 
     private:
         void analyse_frame(cv::Mat image_frame) override;

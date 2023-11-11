@@ -6,6 +6,11 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
     _initialise_costmap();
 
     _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field", 10);
+
+    this->declare_parameter("y_pixel_to_distance_a", 269.0);
+    this->declare_parameter("y_pixel_to_distance_b", -300.64);
+    this->declare_parameter("x_pixel_to_bearing_a", 0.0850541);
+    this->declare_parameter("x_pixel_to_bearing_b", -52.4552);
 }
 
 void
@@ -49,7 +54,7 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
 
     for (cv::Point point_px : locations)
     {
-        float x_m, y_m;
+        double x_m, y_m;
         pixels_to_m(point_px.x, point_px.y, x_m, y_m);
 
         uint32_t row_index = std::round(x_m / COSTMAP_RESOLUTION);
@@ -76,17 +81,17 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
 }
 
 void
-PotentialFieldDriver::pixels_to_m(float x_px, float y_px, float &x_m, float &y_m)
+PotentialFieldDriver::pixels_to_m(double x_px, double y_px, double &x_m, double &y_m)
 {
-    static constexpr float y_pixel_to_distance_a = 269.0;
-    static constexpr float y_pixel_to_distance_b = -300.64;
-    static constexpr float x_pixel_to_bearing_a = 0.0850541;
-    static constexpr float x_pixel_to_bearing_b = -52.4552;
+    double y_pixel_to_distance_a = this->get_parameter("y_pixel_to_distance_a").as_double();
+    double y_pixel_to_distance_b = this->get_parameter("y_pixel_to_distance_b").as_double();
+    double x_pixel_to_bearing_a = this->get_parameter("x_pixel_to_bearing_a").as_double();
+    double x_pixel_to_bearing_b = this->get_parameter("x_pixel_to_bearing_b").as_double();
 
     // Convert pixel coordinates into real world distance and bearing
     // using empirical model.
-    float forward_distance_m = y_pixel_to_distance_a / (static_cast<float>(y_px) + y_pixel_to_distance_b);
-    float bearing_deg = (x_pixel_to_bearing_a * static_cast<float>(x_px)) + x_pixel_to_bearing_b;
+    double forward_distance_m = y_pixel_to_distance_a / (static_cast<double>(y_px) + y_pixel_to_distance_b);
+    double bearing_deg = (x_pixel_to_bearing_a * static_cast<double>(x_px)) + x_pixel_to_bearing_b;
 
     // Using FLU frame
     x_m = forward_distance_m;
@@ -97,7 +102,7 @@ PotentialFieldDriver::pixels_to_m(float x_px, float y_px, float &x_m, float &y_m
 uint32_t
 PotentialFieldDriver::scale(uint32_t value, uint32_t old_min, uint32_t old_max, uint32_t new_min, uint32_t new_max)
 {
-    return round(((static_cast<float>(value - old_min) / static_cast<float>(old_max - old_min)) * (new_max - new_min)) + new_min);
+    return round(((static_cast<double>(value - old_min) / static_cast<double>(old_max - old_min)) * (new_max - new_min)) + new_min);
 }
 
 void
