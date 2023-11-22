@@ -36,12 +36,8 @@ install(TARGETS image_capture
 
 # Resolve and install include filepaths
 include_directories(
-  include
   ${OpenCV_INCLUDE_DIRS}
-)
-install(
-  DIRECTORY include
-  DESTINATION include
+  src
 )
 
 

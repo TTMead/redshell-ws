@@ -26,11 +26,7 @@ install(TARGETS vs_control
 
 
 # Resolve and install include filepaths
-include_directories(include)
-install(
-  DIRECTORY include
-  DESTINATION include
-)
+include_directories(src)
 
 # Install launch files
 install(
