@@ -1,35 +1,37 @@
 cmake_minimum_required(VERSION 3.8)
-project(beboop_vision)
+project(beboop_launch)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Resolve Dependencies
+# Resolve dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(OpenCV REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(cv_bridge REQUIRED)
-
-set(dependencies rclcpp OpenCV sensor_msgs cv_bridge)
+find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+set(dependencies rclcpp geometry_msgs std_msgs)
 
 
 # Install executables
-add_executable(track_error_driver src/track_error_driver.cpp)
-ament_target_dependencies(track_error_driver ${dependencies})
-install(TARGETS track_error_driver
+add_executable(beboop_motor_interface src/beboop_motor_interface.cpp)
+ament_target_dependencies(beboop_motor_interface ${dependencies})
+install(TARGETS beboop_motor_interface
+        DESTINATION lib/${PROJECT_NAME})
+
+add_executable(vs_control src/vs_control.cpp)
+ament_target_dependencies(vs_control ${dependencies})
+install(TARGETS vs_control
         DESTINATION lib/${PROJECT_NAME})
 
 
 # Resolve and install include filepaths
-include_directories(
-  include
-  ${OpenCV_INCLUDE_DIRS}
-)
+include_directories(src)
+
+# Install launch files
 install(
-  DIRECTORY include
-  DESTINATION include
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 
