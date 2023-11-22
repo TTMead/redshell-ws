@@ -32,9 +32,6 @@ class VisionDriver : public rclcpp::Node
 		*/
 		void front_camera_callback(const sensor_msgs::msg::Image::SharedPtr msg);
 
-        
-
-        const int VIDEO_CAMERA_ID = 0;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _front_camera_sub;
 
 };

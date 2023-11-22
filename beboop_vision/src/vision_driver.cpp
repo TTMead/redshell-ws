@@ -3,17 +3,19 @@
 
 VisionDriver::VisionDriver(const std::string &node_name) : Node(node_name)
 {
+	this->declare_parameter("camera_topic", "/front_camera");
+	this->declare_parameter("camera_index", 0);
     this->declare_parameter("is_sitl", false);
+
 	if (this->get_parameter("is_sitl").as_bool()) {
 		// In SITL receive image feed from the ROS topic
 		_front_camera_sub = this->create_subscription<sensor_msgs::msg::Image>(
-			"/front_camera", 10, 
+			this->get_parameter("camera_topic").as_string(), 10, 
 			std::bind(&VisionDriver::front_camera_callback, this, std::placeholders::_1)
 		);
-
 	} else {
 		// If not SITL receive image feed from webcam
-		_video_capture = cv::VideoCapture(VIDEO_CAMERA_ID, cv::CAP_V4L2);
+		_video_capture = cv::VideoCapture(this->get_parameter("camera_index").as_int(), cv::CAP_V4L2);
 		if (!_video_capture.isOpened()) {
 			RCLCPP_ERROR(this->get_logger(), "Could not open video stream");
 		}
