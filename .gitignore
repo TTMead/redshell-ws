@@ -1,1 +1,7 @@
+# ROS Workspace
+build/
+install/
+log/
+
+# IDE Settings
 .vscode
