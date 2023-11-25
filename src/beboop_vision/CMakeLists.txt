@@ -38,7 +38,6 @@ install(TARGETS image_capture
 include_directories(
   ${OpenCV_INCLUDE_DIRS}
   src
-  include
 )
 
 

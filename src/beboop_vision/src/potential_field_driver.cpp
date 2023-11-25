@@ -1,15 +1,13 @@
 #include <math.h>
+#include <algorithm>
 
 #include "potential_field_driver.hpp"
-#include "occupancy_grid_helpers.h"
 
-
+typedef nav_msgs::msg::OccupancyGrid Grid;
 
 PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver")
 {
     initialise_occupancy_grid_msg();
-    initialise_occupancy_values(_occupancy_grid);
-
 
     _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field", 10);
 
@@ -32,7 +30,16 @@ PotentialFieldDriver::initialise_occupancy_grid_msg()
     _occupancy_grid.info.origin.orientation.y = 0;
     _occupancy_grid.info.origin.orientation.z = 0;
     _occupancy_grid.info.origin.orientation.w = 1;
+
+    for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
+    {
+        for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
+        {
+            set_occupancy_grid_tile(row_index, column_index, 0);
+        }
+    }
 }
+
 
 void
 PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
@@ -61,11 +68,30 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
         cv::waitKey(1);
     }
 
-    clear(_occupancy_grid);
     add_bin_image_to_occupancy(track_frame);
 
     publish();
 }
+
+
+void
+PotentialFieldDriver::set_occupancy_grid_tile(uint32_t row_index, uint32_t column_index, int8_t value)
+{
+    if (row_index >= COSTMAP_HEIGHT)
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("occupancy_grid_helper"), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
+        return;
+    }
+
+    if (column_index >= COSTMAP_WIDTH)
+    {
+        RCLCPP_ERROR(rclcpp::get_logger("occupancy_grid_helper"), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
+        return;
+    }
+
+    _occupancy_grid.data[column_index + (row_index*COSTMAP_WIDTH)] = value;
+}
+
 
 void
 PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
@@ -87,8 +113,8 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
             continue;
         }
 
-        uint8_t new_value = get_tile(_occupancy_grid, row_index, column_index) + 80;
-        set_tile(_occupancy_grid, row_index, column_index, new_value);
+        static constexpr int8_t track_value = 80;
+        set_occupancy_grid_tile(row_index, column_index, track_value);
     }
 
     // Uncomment for data collection
