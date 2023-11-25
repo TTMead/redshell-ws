@@ -35,9 +35,15 @@ PotentialFieldDriver::initialise_occupancy_grid_msg()
     {
         for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
         {
-            set_occupancy_grid_tile(row_index, column_index, 0);
+            _occupancy_grid.data.push_back(0);
         }
     }
+}
+
+void
+PotentialFieldDriver::clear_occupancy_grid_msg()
+{
+    std::fill(_occupancy_grid.data.begin(), _occupancy_grid.data.end(), 0);
 }
 
 
@@ -68,6 +74,7 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
         cv::waitKey(1);
     }
 
+    clear_occupancy_grid_msg();
     add_bin_image_to_occupancy(track_frame);
 
     publish();
@@ -79,13 +86,13 @@ PotentialFieldDriver::set_occupancy_grid_tile(uint32_t row_index, uint32_t colum
 {
     if (row_index >= COSTMAP_HEIGHT)
     {
-        RCLCPP_ERROR(rclcpp::get_logger("occupancy_grid_helper"), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
         return;
     }
 
     if (column_index >= COSTMAP_WIDTH)
     {
-        RCLCPP_ERROR(rclcpp::get_logger("occupancy_grid_helper"), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
         return;
     }
 

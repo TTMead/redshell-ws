@@ -9,6 +9,7 @@ class PotentialFieldDriver : public VisionDriver
     private:
         void analyse_frame(cv::Mat image_frame) override;
         void initialise_occupancy_grid_msg();
+        void clear_occupancy_grid_msg();
         void pixels_to_m(double x_px, double y_px, double &x_m, double &y_m); // Converts a point in pixels to a point in meters using a calibrated empirical model
         void publish();
         void add_bin_image_to_occupancy(cv::Mat binary_image);
