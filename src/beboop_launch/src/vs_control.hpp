@@ -8,7 +8,7 @@ class VsControl : public rclcpp::Node
 		VsControl();
 
 	private:
-	void error_callback(const std_msgs::msg::Float32::SharedPtr msg);
+		void error_callback(const std_msgs::msg::Float32::SharedPtr msg);
 
 		rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr _error_sub;
 		rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _cmd_vel_publisher;
