@@ -2,6 +2,7 @@
 #define OCCUPANCY_GRID_HELPERS_H
 
 #include <stdint.h>
+#include <algorithm>
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
@@ -33,7 +34,7 @@ void set_tile(Grid &grid, uint32_t row_index, uint32_t column_index, int8_t valu
 }
 
 
-int8_t get_tile(Grid &grid, uint32_t row_index, uint32_t column_index)
+int8_t get_tile(const Grid &grid, uint32_t row_index, uint32_t column_index)
 {
     if (row_index >= COSTMAP_HEIGHT)
     {
@@ -103,15 +104,15 @@ void clear(Grid &grid)
 }
 
 
-void add_costmaps(Grid &grid_a, Grid grid_b)
+void add_costmaps(Grid &grid_a, const Grid &grid_b)
 {
     for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
     {
         for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
         {
-            int8_t value = static_cast<std::clamp(
+            int8_t value = static_cast<int8_t>(std::clamp(
                 static_cast<int16_t>(get_tile(grid_a, row_index, column_index))
-              + static_cast<int16_t>get_tile(grid_b, row_index, column_index), INT8_MIN, INT8_MAX);
+              + static_cast<int16_t>(get_tile(grid_b, row_index, column_index)), INT8_MIN, INT8_MAX));
             
             set_tile(grid_a, row_index, column_index, value);
         }
@@ -126,7 +127,7 @@ void fade(Grid &grid, uint8_t fade_magnitude)
         for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
         {
             int8_t old_val = get_tile(grid, row_index, column_index);
-            set_tile(grid, row_index, column_index, signbit(old_val) * std::max(old_val - fade_magnitude, 0));
+            set_tile(grid, row_index, column_index, std::signbit(old_val) * std::max(old_val - fade_magnitude, 0));
         }
     }
 }

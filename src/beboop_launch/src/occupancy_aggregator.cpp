@@ -1,4 +1,7 @@
 #include "occupancy_aggregator.hpp"
+#include "occupancy_grid_helpers.h"
+
+using namespace std::chrono_literals;
 
 OccupancyAggregator::OccupancyAggregator() : Node("occupancy_aggregator_node")
 {
@@ -9,7 +12,7 @@ OccupancyAggregator::OccupancyAggregator() : Node("occupancy_aggregator_node")
 
 	_aggregate_grid_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field_combined", 10);
 
-	timer_ = this->create_wall_timer(
+	_timer = this->create_wall_timer(
 		100ms, std::bind(&OccupancyAggregator::update, this)
 	);
 
@@ -26,7 +29,7 @@ OccupancyAggregator::potential_field_callback(const nav_msgs::msg::OccupancyGrid
 void
 OccupancyAggregator::update()
 {
-	fade(_aggregated_occupancy_grid, 1);
+	// fade(_aggregated_occupancy_grid, 1);
 	publish();
 }
 
@@ -43,6 +46,14 @@ OccupancyAggregator::initialise_occupancy_grid_msg()
     _aggregated_occupancy_grid.info.origin.orientation.y = 0;
     _aggregated_occupancy_grid.info.origin.orientation.z = 0;
     _aggregated_occupancy_grid.info.origin.orientation.w = 1;
+
+    for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
+    {
+        for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
+        {
+            _aggregated_occupancy_grid.data.push_back(0);
+        }
+    }
 }
 
 
