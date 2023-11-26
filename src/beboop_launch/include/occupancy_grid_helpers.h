@@ -48,7 +48,7 @@ int8_t get_tile(const Grid &grid, uint32_t row_index, uint32_t column_index)
         return 0;
     }
 
-    return grid.data[row_index + (column_index*COSTMAP_WIDTH)];
+    return grid.data[column_index + (row_index*COSTMAP_WIDTH)];
 }
 
 
@@ -104,7 +104,7 @@ void clear(Grid &grid)
 }
 
 
-void add_costmaps(Grid &grid_a, const Grid &grid_b)
+void add_costmaps(Grid &grid_a, Grid grid_b)
 {
     for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
     {
@@ -120,14 +120,29 @@ void add_costmaps(Grid &grid_a, const Grid &grid_b)
 }
 
 
-void fade(Grid &grid, uint8_t fade_magnitude)
+void combine_costmaps(Grid &grid_a, Grid grid_b)
+{
+    for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
+    {
+        for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
+        {
+            int8_t grid_b_tile = get_tile(grid_b, row_index, column_index);
+            if (grid_b_tile != 0)
+            {
+                set_tile(grid_a, row_index, column_index, grid_b_tile);
+            }
+        }
+    }
+}
+
+void fade(Grid &grid, int8_t fade_magnitude)
 {
     for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
     {
         for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
         {
             int8_t old_val = get_tile(grid, row_index, column_index);
-            set_tile(grid, row_index, column_index, std::signbit(old_val) * std::max(old_val - fade_magnitude, 0));
+            set_tile(grid, row_index, column_index, /*std::signbit(old_val) **/ std::max(std::abs(old_val) - fade_magnitude, 0));
         }
     }
 }

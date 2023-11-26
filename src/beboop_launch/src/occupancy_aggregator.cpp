@@ -5,6 +5,8 @@ using namespace std::chrono_literals;
 
 OccupancyAggregator::OccupancyAggregator() : Node("occupancy_aggregator_node")
 {
+	initialise_occupancy_grid_msg();
+
     _potential_field_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
 		"/potential_field", 10, 
 		std::bind(&OccupancyAggregator::potential_field_callback, this, std::placeholders::_1)
@@ -13,24 +15,22 @@ OccupancyAggregator::OccupancyAggregator() : Node("occupancy_aggregator_node")
 	_aggregate_grid_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field_combined", 10);
 
 	_timer = this->create_wall_timer(
-		100ms, std::bind(&OccupancyAggregator::update, this)
+		250ms, std::bind(&OccupancyAggregator::update, this)
 	);
-
-	initialise_occupancy_grid_msg();
 }
 
 void
 OccupancyAggregator::potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
-	add_costmaps(_aggregated_occupancy_grid, *msg);
+	combine_costmaps(_aggregated_occupancy_grid, *msg);
 }
 
 
 void
 OccupancyAggregator::update()
 {
-	// fade(_aggregated_occupancy_grid, 1);
 	publish();
+	fade(_aggregated_occupancy_grid, 40);
 }
 
 void
