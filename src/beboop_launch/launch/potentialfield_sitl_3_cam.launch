@@ -6,6 +6,7 @@
     <node pkg="beboop_vision" exec="potential_field_driver" name="front_camera_driver">
         <param name="is_sitl" value="true"/>
         <param name="camera_topic" value="/front_camera"/>
+        <param name="field_topic" value="/front_field"/>
         <param name="y_pixel_to_distance_a" value="269.0"/>
         <param name="y_pixel_to_distance_b" value="-300.64"/>
         <param name="x_pixel_to_bearing_a" value="0.0850541"/>
@@ -14,6 +15,7 @@
     <node pkg="beboop_vision" exec="potential_field_driver" name="left_camera_driver">
         <param name="is_sitl" value="true"/>
         <param name="camera_topic" value="/left_camera"/>
+        <param name="field_topic" value="/left_field"/>
         <param name="y_pixel_to_distance_a" value="269.0"/>
         <param name="y_pixel_to_distance_b" value="-300.64"/>
         <param name="x_pixel_to_bearing_a" value="0.0850541"/>
@@ -22,6 +24,7 @@
     <node pkg="beboop_vision" exec="potential_field_driver" name="right_camera_driver">
         <param name="is_sitl" value="true"/>
         <param name="camera_topic" value="/right_camera"/>
+        <param name="field_topic" value="/right_field"/>
         <param name="y_pixel_to_distance_a" value="269.0"/>
         <param name="y_pixel_to_distance_b" value="-300.64"/>
         <param name="x_pixel_to_bearing_a" value="0.0850541"/>

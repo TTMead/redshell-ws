@@ -9,12 +9,13 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
 {
     initialise_occupancy_grid_msg();
 
-    _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field", 10);
-
     this->declare_parameter("y_pixel_to_distance_a", 269.0);
     this->declare_parameter("y_pixel_to_distance_b", -300.64);
     this->declare_parameter("x_pixel_to_bearing_a", 0.0850541);
     this->declare_parameter("x_pixel_to_bearing_b", -52.4552);
+    this->declare_parameter("field_topic", "/front_camera");
+
+    _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>(this->get_parameter("field_topic").as_string(), 10);
 }
 
 void
