@@ -70,7 +70,7 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
 
     if (this->get_parameter("is_sitl").as_bool())
     {
-        cv::imshow("Combined Threshold", track_frame);
+        cv::imshow(this->get_parameter("camera_topic").as_string(), track_frame);
         cv::waitKey(1);
     }
 
