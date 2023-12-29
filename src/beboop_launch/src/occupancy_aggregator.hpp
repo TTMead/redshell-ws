@@ -3,6 +3,8 @@
 
 class OccupancyAggregator : public rclcpp::Node
 {
+	typedef rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr field_sub;
+
 	public:
 		OccupancyAggregator();
 
@@ -15,6 +17,6 @@ class OccupancyAggregator : public rclcpp::Node
 		nav_msgs::msg::OccupancyGrid _aggregated_occupancy_grid;
 		rclcpp::TimerBase::SharedPtr _timer;
 
-		rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr _potential_field_sub;
+		std::vector<field_sub> _potential_field_subs;
 		rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _aggregate_grid_pub;
 };

@@ -30,6 +30,9 @@
         <param name="x_pixel_to_bearing_a" value="0.0850541"/>
         <param name="x_pixel_to_bearing_b" value="-52.4552"/>
     </node>
+    <node pkg="beboop_launch" exec="occupancy_aggregator">
+        <param name="field_topics" value="front_field, left_field, right_field" value-sep=", "/>
+    </node>
     <node pkg="teleop_twist_joy" exec="teleop_node">
         <!-- Right-Handed 1 stick configuration -->
         <!-- <param name="enable_button" value="5"/>

@@ -5,13 +5,20 @@ using namespace std::chrono_literals;
 
 OccupancyAggregator::OccupancyAggregator() : Node("occupancy_aggregator_node")
 {
+    this->declare_parameter("field_topics", std::vector<std::string>({"/front_field"}));
+
+    std::vector field_topics = this->get_parameter("field_topics").as_string_array();
+    for (std::string field_topic : field_topics)
+    {
+        field_sub new_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
+            field_topic, 10, 
+            std::bind(&OccupancyAggregator::potential_field_callback, this, std::placeholders::_1)
+        );
+
+        _potential_field_subs.push_back(new_sub);
+    }
+
 	initialise_occupancy_grid_msg();
-
-    _potential_field_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-		"/potential_field", 10, 
-		std::bind(&OccupancyAggregator::potential_field_callback, this, std::placeholders::_1)
-	);
-
 	_aggregate_grid_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field_combined", 10);
 
 	_timer = this->create_wall_timer(
