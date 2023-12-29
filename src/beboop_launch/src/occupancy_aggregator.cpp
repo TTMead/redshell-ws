@@ -21,6 +21,12 @@ OccupancyAggregator::OccupancyAggregator() : Node("occupancy_aggregator_node")
 	initialise_occupancy_grid_msg();
 	_aggregate_grid_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field_combined", 10);
 
+
+    _encoder_sub = this->create_subscription<geometry_msgs::msg::Twist>(
+        "/wheel_encoders", 10, 
+        std::bind(&OccupancyAggregator::wheel_encoder_callback, this, std::placeholders::_1)
+    );
+
 	_timer = this->create_wall_timer(
 		250ms, std::bind(&OccupancyAggregator::update, this)
 	);
@@ -32,12 +38,29 @@ OccupancyAggregator::potential_field_callback(const nav_msgs::msg::OccupancyGrid
 	combine_costmaps(_aggregated_occupancy_grid, *msg);
 }
 
+void
+OccupancyAggregator::wheel_encoder_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+    static rclcpp::Time previous_time = rclcpp::Node::now();
+    static double forward_distance_remainder = 0.0;
+
+    rclcpp::Time current_time = rclcpp::Node::now();
+    rclcpp::Duration dt = current_time - previous_time;
+    previous_time = rclcpp::Node::now();
+
+    double foward_distance_m = msg->linear.x * dt.seconds();
+    double forward_distance_cells = (foward_distance_m / COSTMAP_RESOLUTION) + forward_distance_remainder;
+    int32_t x_translation = static_cast<int32_t>(std::round(forward_distance_cells));
+    forward_distance_remainder = forward_distance_cells - x_translation;
+    translate(_aggregated_occupancy_grid, x_translation, 0);
+}
+
 
 void
 OccupancyAggregator::update()
 {
 	publish();
-	fade(_aggregated_occupancy_grid, 40);
+	// fade(_aggregated_occupancy_grid, 40);
 }
 
 void
