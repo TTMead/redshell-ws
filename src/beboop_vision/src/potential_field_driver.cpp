@@ -9,11 +9,12 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
 {
     initialise_occupancy_grid_msg();
 
-    this->declare_parameter("y_pixel_to_distance_a", 269.0);
-    this->declare_parameter("y_pixel_to_distance_b", -300.64);
-    this->declare_parameter("x_pixel_to_bearing_a", 0.0850541);
-    this->declare_parameter("x_pixel_to_bearing_b", -52.4552);
-    this->declare_parameter("field_topic", "/front_camera");
+    this->declare_parameter("y_pixel_to_distance_a", 328.0);
+    this->declare_parameter("y_pixel_to_distance_b", -297.0);
+    this->declare_parameter("x_pixel_to_bearing_a", 0.07094);
+    this->declare_parameter("x_pixel_to_bearing_b", -44.4039);
+    this->declare_parameter("camera_rotation_angle", 0.0);
+    this->declare_parameter("field_topic", "/front_field");
 
     _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>(this->get_parameter("field_topic").as_string(), 10);
 }
@@ -112,6 +113,8 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
         double x_m, y_m;
         pixels_to_m(point_px.x, point_px.y, x_m, y_m);
 
+        rotate_point(x_m, y_m, this->get_parameter("camera_rotation_angle").as_double());
+
         uint32_t row_index = std::round(x_m / COSTMAP_RESOLUTION);
         uint32_t column_index = std::round(y_m / COSTMAP_RESOLUTION) + (COSTMAP_WIDTH/2);
 
@@ -129,9 +132,7 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
     // if (locations.size() != 0)
     // {
     //     cv::Point mid = locations[locations.size()/2];
-
-    //     RCLCPP_INFO(this->get_logger(), "mid x: [%d]", mid.x);
-    //     RCLCPP_INFO(this->get_logger(), "mid y: [%d]", mid.y);
+    //     RCLCPP_INFO(this->get_logger(), "Centroid [x, y] : [%d, %d]", mid.x, mid.y);
     // }
 }
 
@@ -151,6 +152,19 @@ PotentialFieldDriver::pixels_to_m(double x_px, double y_px, double &x_m, double 
     // Using FLU frame
     x_m = forward_distance_m;
     y_m = forward_distance_m * std::tan(bearing_deg * M_PI / 180.0);
+}
+
+void
+PotentialFieldDriver::rotate_point(double &x_m, double &y_m, double angle_deg)
+{
+    static constexpr double radian_to_degree = M_PI/180.0;
+
+    double angle_rad = angle_deg * radian_to_degree;
+    double old_x_m = x_m;
+    double old_y_m = y_m;
+
+    x_m = (old_x_m * cos(angle_rad)) + (old_y_m * sin(angle_rad));
+    y_m = (-old_x_m * sin(angle_rad)) + (old_y_m * cos(angle_rad));
 }
 
 

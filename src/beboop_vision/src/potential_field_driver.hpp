@@ -14,6 +14,7 @@ class PotentialFieldDriver : public VisionDriver
         void publish();
         void add_bin_image_to_occupancy(cv::Mat binary_image);
         void set_occupancy_grid_tile(uint32_t row_index, uint32_t column_index, int8_t value);
+        void rotate_point(double &x_m, double &y_m, double angle_deg);
         uint32_t scale(uint32_t value, uint32_t old_min, uint32_t old_max, uint32_t new_min, uint32_t new_max);
 
         static constexpr uint8_t BLUE_THRESHOLD_H_LOW = 90;
