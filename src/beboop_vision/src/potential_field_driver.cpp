@@ -1,17 +1,53 @@
-#include "potential_field_driver.hpp"
 #include <math.h>
+#include <algorithm>
+
+#include "potential_field_driver.hpp"
+
+typedef nav_msgs::msg::OccupancyGrid Grid;
 
 PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver")
 {
-    _initialise_costmap();
+    initialise_occupancy_grid_msg();
 
-    _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field", 10);
+    this->declare_parameter("y_pixel_to_distance_a", 328.0);
+    this->declare_parameter("y_pixel_to_distance_b", -297.0);
+    this->declare_parameter("x_pixel_to_bearing_a", 0.07094);
+    this->declare_parameter("x_pixel_to_bearing_b", -44.4039);
+    this->declare_parameter("camera_rotation_angle", 0.0);
+    this->declare_parameter("field_topic", "/front_field");
 
-    this->declare_parameter("y_pixel_to_distance_a", 269.0);
-    this->declare_parameter("y_pixel_to_distance_b", -300.64);
-    this->declare_parameter("x_pixel_to_bearing_a", 0.0850541);
-    this->declare_parameter("x_pixel_to_bearing_b", -52.4552);
+    _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>(this->get_parameter("field_topic").as_string(), 10);
 }
+
+void
+PotentialFieldDriver::initialise_occupancy_grid_msg()
+{
+    _occupancy_grid.info.resolution = COSTMAP_RESOLUTION;
+    _occupancy_grid.info.width = COSTMAP_WIDTH;
+    _occupancy_grid.info.height = COSTMAP_HEIGHT;
+    _occupancy_grid.info.origin.position.x = 0;
+    _occupancy_grid.info.origin.position.y = 0;
+    _occupancy_grid.info.origin.position.z = 0;
+    _occupancy_grid.info.origin.orientation.x = 0;
+    _occupancy_grid.info.origin.orientation.y = 0;
+    _occupancy_grid.info.origin.orientation.z = 0;
+    _occupancy_grid.info.origin.orientation.w = 1;
+
+    for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
+    {
+        for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
+        {
+            _occupancy_grid.data.push_back(0);
+        }
+    }
+}
+
+void
+PotentialFieldDriver::clear_occupancy_grid_msg()
+{
+    std::fill(_occupancy_grid.data.begin(), _occupancy_grid.data.end(), 0);
+}
+
 
 void
 PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
@@ -36,15 +72,35 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
 
     if (this->get_parameter("is_sitl").as_bool())
     {
-        cv::imshow("Combined Threshold", track_frame);
+        cv::imshow(this->get_parameter("camera_topic").as_string(), track_frame);
         cv::waitKey(1);
     }
 
-    clear();
+    clear_occupancy_grid_msg();
     add_bin_image_to_occupancy(track_frame);
 
     publish();
 }
+
+
+void
+PotentialFieldDriver::set_occupancy_grid_tile(uint32_t row_index, uint32_t column_index, int8_t value)
+{
+    if (row_index >= COSTMAP_HEIGHT)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
+        return;
+    }
+
+    if (column_index >= COSTMAP_WIDTH)
+    {
+        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
+        return;
+    }
+
+    _occupancy_grid.data[column_index + (row_index*COSTMAP_WIDTH)] = value;
+}
+
 
 void
 PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
@@ -57,6 +113,8 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
         double x_m, y_m;
         pixels_to_m(point_px.x, point_px.y, x_m, y_m);
 
+        rotate_point(x_m, y_m, this->get_parameter("camera_rotation_angle").as_double());
+
         uint32_t row_index = std::round(x_m / COSTMAP_RESOLUTION);
         uint32_t column_index = std::round(y_m / COSTMAP_RESOLUTION) + (COSTMAP_WIDTH/2);
 
@@ -66,17 +124,15 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
             continue;
         }
 
-        uint8_t new_value = get_tile(row_index, column_index) + 80;
-        set_tile(row_index, column_index, new_value);
+        static constexpr int8_t track_value = 80;
+        set_occupancy_grid_tile(row_index, column_index, track_value);
     }
 
     // Uncomment for data collection
     // if (locations.size() != 0)
     // {
     //     cv::Point mid = locations[locations.size()/2];
-
-    //     RCLCPP_INFO(this->get_logger(), "mid x: [%d]", mid.x);
-    //     RCLCPP_INFO(this->get_logger(), "mid y: [%d]", mid.y);
+    //     RCLCPP_INFO(this->get_logger(), "Centroid [x, y] : [%d, %d]", mid.x, mid.y);
     // }
 }
 
@@ -98,6 +154,19 @@ PotentialFieldDriver::pixels_to_m(double x_px, double y_px, double &x_m, double 
     y_m = forward_distance_m * std::tan(bearing_deg * M_PI / 180.0);
 }
 
+void
+PotentialFieldDriver::rotate_point(double &x_m, double &y_m, double angle_deg)
+{
+    static constexpr double radian_to_degree = M_PI/180.0;
+
+    double angle_rad = angle_deg * radian_to_degree;
+    double old_x_m = x_m;
+    double old_y_m = y_m;
+
+    x_m = (old_x_m * cos(angle_rad)) + (old_y_m * sin(angle_rad));
+    y_m = (-old_x_m * sin(angle_rad)) + (old_y_m * cos(angle_rad));
+}
+
 
 uint32_t
 PotentialFieldDriver::scale(uint32_t value, uint32_t old_min, uint32_t old_max, uint32_t new_min, uint32_t new_max)
@@ -108,130 +177,10 @@ PotentialFieldDriver::scale(uint32_t value, uint32_t old_min, uint32_t old_max, 
 void
 PotentialFieldDriver::publish()
 {
-    nav_msgs::msg::OccupancyGrid msg;
+    _occupancy_grid.header.stamp = rclcpp::Node::now();
+    _occupancy_grid.header.frame_id = "map";
 
-    msg.header.stamp = rclcpp::Node::now();
-    msg.header.frame_id = "map";
-    msg.info.resolution = COSTMAP_RESOLUTION;
-    msg.info.width = COSTMAP_WIDTH;
-    msg.info.height = COSTMAP_HEIGHT;
-    msg.info.origin.position.x = 0;
-    msg.info.origin.position.y = 0;
-    msg.info.origin.position.z = 0;
-    msg.info.origin.orientation.x = 0;
-    msg.info.origin.orientation.y = 0;
-    msg.info.origin.orientation.z = 0;
-    msg.info.origin.orientation.w = 1;
-
-    msg.data.clear();
-    msg.data.insert(msg.data.end(), &costmap[0], &costmap[COSTMAP_LENGTH]);
-
-    _potential_field_publisher->publish(msg);
-}
-
-
-void
-PotentialFieldDriver::set_tile(uint32_t row_index, uint32_t column_index, int8_t value)
-{
-    if (row_index >= COSTMAP_HEIGHT)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
-        return;
-    }
-
-    if (column_index >= COSTMAP_WIDTH)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
-        return;
-    }
-
-    costmap[column_index + (row_index*COSTMAP_WIDTH)] = value;
-}
-
-int8_t
-PotentialFieldDriver::get_tile(uint32_t row_index, uint32_t column_index)
-{
-    if (row_index >= COSTMAP_HEIGHT)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds row. Requested row: %d. Max height: %d.", row_index, COSTMAP_HEIGHT);
-        return 0;
-    }
-
-    if (column_index >= COSTMAP_WIDTH)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Attempt to access out of bounds column. Requested column: %d. Max width: %d.", column_index, COSTMAP_WIDTH);
-        return 0;
-    }
-
-    return costmap[row_index + (column_index*COSTMAP_WIDTH)];
-}
-
-
-void
-PotentialFieldDriver::_initialise_costmap()
-{
-    for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
-    {
-        for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
-        {
-            set_tile(row_index, column_index, 0);
-        }
-    }
-}
-
-void
-PotentialFieldDriver::translate(int32_t x_translation, int32_t y_translation)
-{
-    if ((abs(x_translation) > COSTMAP_WIDTH/2) || (abs(y_translation) > COSTMAP_HEIGHT/2))
-    {
-        RCLCPP_ERROR(this->get_logger(), "Translation magnitude too high [%d, %d]", x_translation, y_translation);
-        return;
-    }
-
-    for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
-    {
-        for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
-        {
-            int64_t old_row_index = row_index + x_translation;
-            int64_t old_column_index = column_index + y_translation;
-
-            if ((old_row_index > COSTMAP_HEIGHT)||
-                (old_row_index < 0) ||
-                (old_column_index > COSTMAP_WIDTH) ||
-                (old_column_index < 0))
-            {
-                set_tile(row_index, column_index, 0);
-            }
-            else
-            {
-                set_tile(row_index, column_index, get_tile(old_row_index, old_column_index));
-            }
-        }
-    }
-}
-
-
-void
-PotentialFieldDriver::clear()
-{
-    for (uint32_t i = 0; i < COSTMAP_LENGTH; i++)
-    {
-        costmap[i] = 0;
-    }
-}
-
-
-void
-PotentialFieldDriver::fade(uint8_t fade_magnitude)
-{
-    for (uint32_t row_index = 0; row_index < COSTMAP_HEIGHT; row_index++)
-    {
-        for (uint32_t column_index = 0; column_index < COSTMAP_WIDTH; column_index++)
-        {
-            int8_t old_val = get_tile(row_index, column_index);
-            set_tile(row_index, column_index, signbit(old_val) * std::max(old_val - fade_magnitude, 0));
-        }
-    }
+    _potential_field_publisher->publish(_occupancy_grid);
 }
 
 

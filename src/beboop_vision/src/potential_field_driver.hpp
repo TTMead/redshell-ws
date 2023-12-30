@@ -6,23 +6,16 @@ class PotentialFieldDriver : public VisionDriver
     public:
         PotentialFieldDriver();
 
-        void translate(int32_t x_translation, int32_t y_translation);
-        void fade(uint8_t fade_magnitude);
-        void publish();
-        void add_bin_image_to_occupancy(cv::Mat binary_image);
-        uint32_t scale(uint32_t value, uint32_t old_min, uint32_t old_max, uint32_t new_min, uint32_t new_max);
-
-        void set_tile(uint32_t row_index, uint32_t column_index, int8_t value);
-        int8_t get_tile(uint32_t row_index, uint32_t column_index);
-        void clear();
-
-        // Converts a point in pixels to a point in meters using a calibrated empirical model
-        void pixels_to_m(double x_px, double y_px, double &x_m, double &y_m);
-
     private:
         void analyse_frame(cv::Mat image_frame) override;
-
-        void _initialise_costmap();
+        void initialise_occupancy_grid_msg();
+        void clear_occupancy_grid_msg();
+        void pixels_to_m(double x_px, double y_px, double &x_m, double &y_m); // Converts a point in pixels to a point in meters using a calibrated empirical model
+        void publish();
+        void add_bin_image_to_occupancy(cv::Mat binary_image);
+        void set_occupancy_grid_tile(uint32_t row_index, uint32_t column_index, int8_t value);
+        void rotate_point(double &x_m, double &y_m, double angle_deg);
+        uint32_t scale(uint32_t value, uint32_t old_min, uint32_t old_max, uint32_t new_min, uint32_t new_max);
 
         static constexpr uint8_t BLUE_THRESHOLD_H_LOW = 90;
         static constexpr uint8_t BLUE_THRESHOLD_H_HIGH = 130;
@@ -43,7 +36,7 @@ class PotentialFieldDriver : public VisionDriver
         static constexpr uint64_t COSTMAP_LENGTH = COSTMAP_WIDTH * COSTMAP_HEIGHT;
         static constexpr float COSTMAP_RESOLUTION = 0.05;   // [m/cell]
 
-        int8_t costmap[COSTMAP_LENGTH];
+        nav_msgs::msg::OccupancyGrid _occupancy_grid;
 
         rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _potential_field_publisher;
 };

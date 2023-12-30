@@ -10,7 +10,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-set(dependencies rclcpp geometry_msgs std_msgs)
+find_package(nav_msgs REQUIRED)
+set(dependencies rclcpp geometry_msgs std_msgs nav_msgs)
 
 
 # Install executables
@@ -24,9 +25,13 @@ ament_target_dependencies(vs_control ${dependencies})
 install(TARGETS vs_control
         DESTINATION lib/${PROJECT_NAME})
 
+add_executable(occupancy_aggregator src/occupancy_aggregator.cpp)
+ament_target_dependencies(occupancy_aggregator ${dependencies})
+install(TARGETS occupancy_aggregator
+        DESTINATION lib/${PROJECT_NAME})
 
 # Resolve and install include filepaths
-include_directories(src)
+include_directories(src include)
 
 # Install launch files
 install(

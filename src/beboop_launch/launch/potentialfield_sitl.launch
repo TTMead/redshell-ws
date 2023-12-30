@@ -3,14 +3,6 @@
         <param name="ROS_IP" value="127.0.0.1"/>
         <param name="ROS_TCP_PORT" value="10000"/>
     </node>
-    <node pkg="beboop_vision" exec="potential_field_driver" name="front_camera_driver">
-        <param name="is_sitl" value="true"/>
-        <param name="camera_topic" value="/front_camera"/>
-        <param name="y_pixel_to_distance_a" value="269.0"/>
-        <param name="y_pixel_to_distance_b" value="-300.64"/>
-        <param name="x_pixel_to_bearing_a" value="0.0850541"/>
-        <param name="x_pixel_to_bearing_b" value="-52.4552"/>
-    </node>
     <node pkg="teleop_twist_joy" exec="teleop_node">
         <!-- Right-Handed 1 stick configuration -->
         <!-- <param name="enable_button" value="5"/>
@@ -24,5 +16,13 @@
     </node>
     <node pkg="joy" exec="joy_node">
         <param name="autorepeat_rate" value="20.0"/>
+    </node>
+    <node pkg="beboop_vision" exec="potential_field_driver" name="front_camera_driver">
+        <param name="is_sitl" value="true"/>
+        <param name="camera_topic" value="/front_camera"/>
+        <param name="field_topic" value="/front_field"/>
+    </node>
+    <node pkg="beboop_launch" exec="occupancy_aggregator">
+        <param name="field_topics" value="front_field" value-sep=", "/>
     </node>
 </launch>

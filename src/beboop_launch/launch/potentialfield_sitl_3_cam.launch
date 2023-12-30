@@ -3,26 +3,26 @@
         <param name="ROS_IP" value="127.0.0.1"/>
         <param name="ROS_TCP_PORT" value="10000"/>
     </node>
-    <node pkg="beboop_vision" exec="front_camera_driver">
+    <node pkg="beboop_vision" exec="potential_field_driver" name="front_camera_driver">
         <param name="is_sitl" value="true"/>
-        <param name="y_pixel_to_distance_a" value="269.0"/>
-        <param name="y_pixel_to_distance_b" value="-300.64"/>
-        <param name="x_pixel_to_bearing_a" value="0.0850541"/>
-        <param name="x_pixel_to_bearing_b" value="-52.4552"/>
+        <param name="camera_topic" value="/front_camera"/>
+        <param name="field_topic" value="/front_field"/>
+        <param name="camera_rotation_angle" value="0.0"/>
     </node>
-    <node pkg="beboop_vision" exec="left_camera_driver">
+    <node pkg="beboop_vision" exec="potential_field_driver" name="left_camera_driver">
         <param name="is_sitl" value="true"/>
-        <param name="y_pixel_to_distance_a" value="269.0"/>
-        <param name="y_pixel_to_distance_b" value="-300.64"/>
-        <param name="x_pixel_to_bearing_a" value="0.0850541"/>
-        <param name="x_pixel_to_bearing_b" value="-52.4552"/>
+        <param name="camera_topic" value="/left_camera"/>
+        <param name="field_topic" value="/left_field"/>
+        <param name="camera_rotation_angle" value="45.0"/>
     </node>
-    <node pkg="beboop_vision" exec="right_camera_driver">
+    <node pkg="beboop_vision" exec="potential_field_driver" name="right_camera_driver">
         <param name="is_sitl" value="true"/>
-        <param name="y_pixel_to_distance_a" value="269.0"/>
-        <param name="y_pixel_to_distance_b" value="-300.64"/>
-        <param name="x_pixel_to_bearing_a" value="0.0850541"/>
-        <param name="x_pixel_to_bearing_b" value="-52.4552"/>
+        <param name="camera_topic" value="/right_camera"/>
+        <param name="field_topic" value="/right_field"/>
+        <param name="camera_rotation_angle" value="-45.0"/>
+    </node>
+    <node pkg="beboop_launch" exec="occupancy_aggregator">
+        <param name="field_topics" value="front_field, left_field, right_field" value-sep=", "/>
     </node>
     <node pkg="teleop_twist_joy" exec="teleop_node">
         <!-- Right-Handed 1 stick configuration -->
