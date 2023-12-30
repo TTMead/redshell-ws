@@ -1,4 +1,4 @@
-#include "beboop_motor_interface.hpp"
+#include "motor_interface.hpp"
 
 // C library headers
 #include <stdio.h>
@@ -14,12 +14,12 @@
 #define CMDVEL_MIN_PERIOD_S 0.1		// The amount of time to ignore cmd_vel msg after one has been received
 #define MOTOR_DEADZONE 9.0				// The threshold of percentage PWM that causes the motor to start moving
 
-BeboopMotorInterface::BeboopMotorInterface() : Node("beboop_motor_interface")
+MotorInterface::MotorInterface() : Node("redshell_motor_interface")
 {
 	// Subscribe to /cmd_vel topic
 	_cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
 		"/cmd_vel", 10, 
-		std::bind(&BeboopMotorInterface::cmd_vel_callback, this, std::placeholders::_1)
+		std::bind(&MotorInterface::cmd_vel_callback, this, std::placeholders::_1)
 	);
 
 	// Open serial port connection to the motor interface board
@@ -33,16 +33,16 @@ BeboopMotorInterface::BeboopMotorInterface() : Node("beboop_motor_interface")
 	_last_command_timestamp = rclcpp::Node::now();
 	_command_timout_timer = this->create_wall_timer(
     	std::chrono::milliseconds(500), 
-		std::bind(&BeboopMotorInterface::timout_timer_callback, this)
+		std::bind(&MotorInterface::timout_timer_callback, this)
 	);
 }
 
-BeboopMotorInterface::~BeboopMotorInterface() {
+MotorInterface::~MotorInterface() {
 	close(this->_serial_port);
 }
 
 void
-BeboopMotorInterface::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+MotorInterface::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
 	if (msg->linear.y != 0 ||
 		msg->linear.z != 0 ||
@@ -66,7 +66,7 @@ BeboopMotorInterface::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPt
 
 
 void
-BeboopMotorInterface::timout_timer_callback() {
+MotorInterface::timout_timer_callback() {
 	rclcpp::Time current_time = rclcpp::Node::now();
 
 	// Stop the motors if we havent received a command for over 1 second
@@ -76,7 +76,7 @@ BeboopMotorInterface::timout_timer_callback() {
 }
 
 int
-BeboopMotorInterface::scale_motor_command(int command)
+MotorInterface::scale_motor_command(int command)
 {
 	// If below deadzone, don't run
 	if (command < MOTOR_DEADZONE) {
@@ -91,7 +91,7 @@ BeboopMotorInterface::scale_motor_command(int command)
 
 
 void
-BeboopMotorInterface::write_motor_command(float throttle, float yaw_rate){
+MotorInterface::write_motor_command(float throttle, float yaw_rate){
 	// Speed values are within the range of [-1 to 1]
 	float left_speed = (throttle - yaw_rate)/2;    
 	float right_speed = (throttle + yaw_rate)/2;
@@ -144,7 +144,7 @@ BeboopMotorInterface::write_motor_command(float throttle, float yaw_rate){
 }
 
 void
-BeboopMotorInterface::configure_serial_port()
+MotorInterface::configure_serial_port()
 {
 	/* Critical serial specifications:
 	 * Baud: 19200
@@ -203,7 +203,7 @@ BeboopMotorInterface::configure_serial_port()
 int main(int argc, char * argv[])
 {
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<BeboopMotorInterface>());
+	rclcpp::spin(std::make_shared<MotorInterface>());
 	rclcpp::shutdown();
 	return 0;
 }

@@ -3,11 +3,11 @@
 
 #include <memory>
 
-class BeboopMotorInterface : public rclcpp::Node
+class MotorInterface : public rclcpp::Node
 {
 	public:
-		BeboopMotorInterface();
-		~BeboopMotorInterface();
+		MotorInterface();
+		~MotorInterface();
 
 		const char* SERIAL_PORT_LOCATION = "/dev/ttyUSB0";
 
