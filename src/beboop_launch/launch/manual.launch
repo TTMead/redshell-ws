@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="beboop_launch" exec="beboop_motor_interface"/>
+    <node pkg="redshell_io" exec="motor_interface"/>
     <node pkg="teleop_twist_joy" exec="teleop_node">
         <!-- Right-Handed 1 stick configuration -->
         <!-- <param name="enable_button" value="5"/>
