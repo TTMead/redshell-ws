@@ -10,18 +10,14 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     return LaunchDescription([
-
         # ==== Unity Interfacing ====
-
         launch_ros.actions.Node(
             package='ros_tcp_endpoint',
             executable='default_server_endpoint',
             parameters=[{"ROS_IP": "127.0.0.1"}, {"ROS_TCP_PORT": 10000}],
         ),
 
-
         # ==== Joystick ====
-
         launch_ros.actions.Node(
             package='teleop_twist_joy',
             executable='teleop_node',
@@ -32,7 +28,6 @@ def generate_launch_description():
             # 2 stick configuration
             parameters=[{"use_sim_time": True}, {"enable_button": 5}, {"axis_linear.x": 4}, {"axis_angular.yaw": 0}],
         ),
-
         launch_ros.actions.Node(
             package='joy',
             executable='joy_node',
@@ -40,8 +35,6 @@ def generate_launch_description():
         ),
 
         # ==== State Estimation ====
-
-
         launch_ros.actions.Node(
             package='robot_localization',
             executable='ekf_node',
