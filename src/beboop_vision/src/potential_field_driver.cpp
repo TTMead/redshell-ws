@@ -13,7 +13,7 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
     this->declare_parameter("y_pixel_to_distance_b", -297.0);
     this->declare_parameter("x_pixel_to_bearing_a", 0.07094);
     this->declare_parameter("x_pixel_to_bearing_b", -44.4039);
-    this->declare_parameter("camera_rotation_angle", 0.0);
+    this->declare_parameter("frame_id", "base_link");
     this->declare_parameter("field_topic", "/front_field");
 
     _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>(this->get_parameter("field_topic").as_string(), 10);
@@ -41,6 +41,7 @@ PotentialFieldDriver::initialise_occupancy_grid_msg()
         }
     }
 }
+
 
 void
 PotentialFieldDriver::clear_occupancy_grid_msg()
@@ -70,11 +71,11 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
     cv::Mat track_frame = yellow_frame + blue_frame;
 	cv::medianBlur(track_frame, track_frame, 7);
 
-    if (this->get_parameter("is_sitl").as_bool())
-    {
-        cv::imshow(this->get_parameter("camera_topic").as_string(), track_frame);
-        cv::waitKey(1);
-    }
+    // if (this->get_parameter("is_sitl").as_bool())
+    // {
+    //     cv::imshow(this->get_parameter("camera_topic").as_string(), track_frame);
+    //     cv::waitKey(1);
+    // }
 
     clear_occupancy_grid_msg();
     add_bin_image_to_occupancy(track_frame);
@@ -112,8 +113,6 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
     {
         double x_m, y_m;
         pixels_to_m(point_px.x, point_px.y, x_m, y_m);
-
-        rotate_point(x_m, y_m, this->get_parameter("camera_rotation_angle").as_double());
 
         uint32_t row_index = std::round(x_m / COSTMAP_RESOLUTION);
         uint32_t column_index = std::round(y_m / COSTMAP_RESOLUTION) + (COSTMAP_WIDTH/2);
@@ -154,20 +153,6 @@ PotentialFieldDriver::pixels_to_m(double x_px, double y_px, double &x_m, double 
     y_m = forward_distance_m * std::tan(bearing_deg * M_PI / 180.0);
 }
 
-void
-PotentialFieldDriver::rotate_point(double &x_m, double &y_m, double angle_deg)
-{
-    static constexpr double radian_to_degree = M_PI/180.0;
-
-    double angle_rad = angle_deg * radian_to_degree;
-    double old_x_m = x_m;
-    double old_y_m = y_m;
-
-    x_m = (old_x_m * cos(angle_rad)) + (old_y_m * sin(angle_rad));
-    y_m = (-old_x_m * sin(angle_rad)) + (old_y_m * cos(angle_rad));
-}
-
-
 uint32_t
 PotentialFieldDriver::scale(uint32_t value, uint32_t old_min, uint32_t old_max, uint32_t new_min, uint32_t new_max)
 {
@@ -177,8 +162,9 @@ PotentialFieldDriver::scale(uint32_t value, uint32_t old_min, uint32_t old_max, 
 void
 PotentialFieldDriver::publish()
 {
+    _occupancy_grid.info.map_load_time = rclcpp::Node::now();
     _occupancy_grid.header.stamp = rclcpp::Node::now();
-    _occupancy_grid.header.frame_id = "map";
+    _occupancy_grid.header.frame_id = this->get_parameter("frame_id").as_string();
 
     _potential_field_publisher->publish(_occupancy_grid);
 }
