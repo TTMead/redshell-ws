@@ -9,8 +9,10 @@ Aggregator::Aggregator() : Node("aggregator_node")
     this->declare_parameter("field_topics", std::vector<std::string>({"/front_field"}));
     this->declare_parameter("aggregate_frame_id", "map");
 
-    // _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
-    // _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
+	initialise_occupancy_grid_msg();
+
+    _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
+    _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
 
     // Create subscription to all field topics
     std::vector field_topics = this->get_parameter("field_topics").as_string_array();
@@ -25,7 +27,6 @@ Aggregator::Aggregator() : Node("aggregator_node")
         _potential_field_subs.push_back(new_sub);
     }
 
-	initialise_occupancy_grid_msg();
 	_aggregate_grid_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field_combined", 10);
 
 	_timer = this->create_wall_timer(
@@ -91,11 +92,12 @@ Aggregator::initialise_occupancy_grid_msg()
     static constexpr uint32_t costmap_width_cells = 1000;
     static constexpr uint32_t costmap_height_cells = 1000;
 
+    _aggregated_occupancy_grid.header.frame_id = "map";
     _aggregated_occupancy_grid.info.resolution = costmap_resolution_m_per_cell;
     _aggregated_occupancy_grid.info.width = costmap_width_cells;
     _aggregated_occupancy_grid.info.height = costmap_height_cells;
-    _aggregated_occupancy_grid.info.origin.position.x = 0;
-    _aggregated_occupancy_grid.info.origin.position.y = 0;
+    _aggregated_occupancy_grid.info.origin.position.x = -(static_cast<double>(costmap_width_cells)/2.0) * costmap_resolution_m_per_cell;
+    _aggregated_occupancy_grid.info.origin.position.y = -(static_cast<double>(costmap_height_cells)/2.0) * costmap_resolution_m_per_cell;
     _aggregated_occupancy_grid.info.origin.position.z = 0;
     _aggregated_occupancy_grid.info.origin.orientation.x = 0;
     _aggregated_occupancy_grid.info.origin.orientation.y = 0;
@@ -116,7 +118,6 @@ void
 Aggregator::publish()
 {
 	_aggregated_occupancy_grid.header.stamp = rclcpp::Node::now();
-    _aggregated_occupancy_grid.header.frame_id = "map";
 
     _aggregate_grid_pub->publish(_aggregated_occupancy_grid);
 }

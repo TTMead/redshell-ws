@@ -43,7 +43,8 @@ class Aggregator : public rclcpp::Node
         }
 
         /**
-         * @brief Adds a value at a given world point to an occupancy grid tile.
+         * @brief Adds a value from a given world point to an occupancy grid tile. If the world point exists outside
+         * the bounds of the occupancy grid, nothing is done.
          * 
          * @param grid The occupancy grid to add to.
          * @param point The point to map to a tile.
@@ -51,11 +52,20 @@ class Aggregator : public rclcpp::Node
          */
         static inline void add_point_to_grid(nav_msgs::msg::OccupancyGrid& grid, const geometry_msgs::msg::Point& point, const int8_t value)
         {
+            if ((point.x < 0) || (point.y < 0))
+            {
+                return;
+            }
+
             const uint32_t col = std::floor(point.x / grid.info.resolution);
             const uint32_t row = std::floor(point.y / grid.info.resolution);
 
-            const uint64_t index = col + (row * grid.info.width);
+            if ((col >= grid.info.width) || (row >= grid.info.height))
+            {
+                return;
+            }
 
+            const uint64_t index = col + (row * grid.info.width);
             grid.data[index] = value;
         }
 
