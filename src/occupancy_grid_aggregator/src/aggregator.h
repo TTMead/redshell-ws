@@ -35,8 +35,8 @@ class Aggregator : public rclcpp::Node
             const uint32_t row = std::floor(index / grid.info.width);
 
             geometry_msgs::msg::PointStamped tile_location{};
-            tile_location.point.x = grid.info.origin.position.x + (row * grid.info.resolution);
-            tile_location.point.y = grid.info.origin.position.y + (col * grid.info.resolution);
+            tile_location.point.x = grid.info.origin.position.x + (static_cast<float>(row) * grid.info.resolution);
+            tile_location.point.y = grid.info.origin.position.y + (static_cast<float>(col - (grid.info.width/2)) * grid.info.resolution);
             tile_location.header.frame_id = grid.header.frame_id;
 
             return tile_location;
