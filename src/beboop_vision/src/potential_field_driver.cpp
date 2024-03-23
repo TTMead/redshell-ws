@@ -150,7 +150,7 @@ PotentialFieldDriver::pixels_to_m(double x_px, double y_px, double &x_m, double 
 
     // Using FLU frame
     x_m = forward_distance_m;
-    y_m = forward_distance_m * std::tan(bearing_deg * M_PI / 180.0);
+    y_m = forward_distance_m * std::tan(-bearing_deg * M_PI / 180.0);
 }
 
 uint32_t
