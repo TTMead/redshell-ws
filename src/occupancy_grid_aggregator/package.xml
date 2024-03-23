@@ -3,9 +3,9 @@
 <package format="3">
   <name>occupancy_grid_aggregator</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="timothy.mead20@gmail.com">timothy</maintainer>
-  <license>TODO: License declaration</license>
+  <description>Combines multiple occupancy_grid messages into a single occupancy_grid message.</description>
+  <maintainer email="timothy.mead20@gmail.com">Timothy Mead</maintainer>
+  <license>MIT License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

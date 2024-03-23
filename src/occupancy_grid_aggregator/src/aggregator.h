@@ -15,10 +15,32 @@ class Aggregator : public rclcpp::Node
 		Aggregator();
 
 	private:
+        /**
+         * @brief Called at a regular rate by a ROS timer, once initialised.
+         */
 		void update();
+
+        /**
+         * @brief Publishes the aggregated costmap.
+         */
 		void publish();
+
+        /**
+         * @brief Initialises the internal aggregate occupancy_grid.
+         */
 		void initialise_occupancy_grid_msg();
+
+        /**
+         * @brief Callback on the potential field subscriptions to combine.
+         */
 		void potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+
+        /**
+         * @brief Merges the information from a new occupancy_grid to an existing occupancy_grid.
+         * 
+         * @param grid The occupancy_grid to by altered.
+         * @param new_grid The occupancy_grid to be merged.
+         */
         void combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs::msg::OccupancyGrid& new_grid);
 
         /**
