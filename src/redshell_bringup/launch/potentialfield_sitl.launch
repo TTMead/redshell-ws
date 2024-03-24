@@ -17,12 +17,12 @@
     <node pkg="joy" exec="joy_node">
         <param name="autorepeat_rate" value="20.0"/>
     </node>
-    <node pkg="beboop_vision" exec="potential_field_driver" name="front_camera_driver">
+    <node pkg="redshell_vision" exec="potential_field_driver" name="front_camera_driver">
         <param name="is_sitl" value="true"/>
         <param name="camera_topic" value="/front_camera"/>
         <param name="field_topic" value="/front_field"/>
     </node>
-    <node pkg="beboop_launch" exec="occupancy_aggregator">
+    <node pkg="redshell_bringup" exec="occupancy_aggregator">
         <param name="field_topics" value="front_field" value-sep=", "/>
     </node>
 </launch>

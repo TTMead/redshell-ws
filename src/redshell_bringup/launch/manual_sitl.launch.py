@@ -40,6 +40,6 @@ def generate_launch_description():
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
-            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("beboop_launch"), 'config', 'state_estimation_params.yaml')],
+            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("redshell_bringup"), 'config', 'state_estimation_params.yaml')],
            ),
     ])

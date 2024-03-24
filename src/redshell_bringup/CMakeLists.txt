@@ -1,43 +1,32 @@
 cmake_minimum_required(VERSION 3.8)
-project(beboop_vision)
+project(redshell_bringup)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Resolve Dependencies
+# Resolve dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(OpenCV REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(cv_bridge REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-
-set(dependencies rclcpp OpenCV sensor_msgs cv_bridge std_msgs nav_msgs)
+set(dependencies rclcpp geometry_msgs std_msgs nav_msgs)
 
 
 # Install executables
-add_executable(track_error_driver src/track_error_driver.cpp src/vision_driver.cpp)
-ament_target_dependencies(track_error_driver ${dependencies})
-install(TARGETS track_error_driver
+add_executable(vs_control src/vs_control.cpp)
+ament_target_dependencies(vs_control ${dependencies})
+install(TARGETS vs_control
         DESTINATION lib/${PROJECT_NAME})
-
-add_executable(potential_field_driver src/potential_field_driver.cpp src/vision_driver.cpp)
-ament_target_dependencies(potential_field_driver ${dependencies})
-install(TARGETS potential_field_driver
-        DESTINATION lib/${PROJECT_NAME})
-
-add_executable(image_capture src/image_capture.cpp)
-ament_target_dependencies(image_capture ${dependencies})
-install(TARGETS image_capture
-        DESTINATION lib/${PROJECT_NAME})
-
 
 # Resolve and install include filepaths
-include_directories(
-  ${OpenCV_INCLUDE_DIRS}
-  src
+include_directories(src include)
+
+# Install launch files
+install(
+  DIRECTORY launch config
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 

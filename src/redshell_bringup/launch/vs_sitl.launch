@@ -3,10 +3,10 @@
         <param name="ROS_IP" value="127.0.0.1"/>
         <param name="ROS_TCP_PORT" value="10000"/>
     </node>
-    <node pkg="beboop_vision" exec="track_error_driver">
+    <node pkg="redshell_vision" exec="track_error_driver">
         <param name="is_sitl" value="true"/>
     </node>
-    <node pkg="beboop_launch" exec="vs_control">
+    <node pkg="redshell_bringup" exec="vs_control">
         <param name="kp" value="0.35"/>
         <param name="speed" value="0.3"/>
     </node>

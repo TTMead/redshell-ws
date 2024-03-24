@@ -19,7 +19,7 @@ def generate_launch_description():
 
         # ==== Camera Drivers ====
         launch_ros.actions.Node(
-            package='beboop_vision',
+            package='redshell_vision',
             executable='potential_field_driver',
             name='front_camera_driver',
             parameters=[
@@ -30,7 +30,7 @@ def generate_launch_description():
             ]
         ),
         launch_ros.actions.Node(
-            package='beboop_vision',
+            package='redshell_vision',
             executable='potential_field_driver',
             name='left_camera_driver',
             parameters=[
@@ -41,7 +41,7 @@ def generate_launch_description():
             ]
         ),
         launch_ros.actions.Node(
-            package='beboop_vision',
+            package='redshell_vision',
             executable='potential_field_driver',
             name='right_camera_driver',
             parameters=[
@@ -75,7 +75,7 @@ def generate_launch_description():
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
-            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("beboop_launch"), 'config', 'state_estimation_params.yaml')]
+            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("redshell_bringup"), 'config', 'state_estimation_params.yaml')]
         ),
         
         # ==== Static Broadcasters ====
