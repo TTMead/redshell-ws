@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(beboop_vision)
+project(occupancy_grid_aggregator)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -8,35 +8,22 @@ endif()
 # Resolve Dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(OpenCV REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(cv_bridge REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+set(dependencies rclcpp tf2_ros tf2 tf2_geometry_msgs geometry_msgs nav_msgs)
 
-set(dependencies rclcpp OpenCV sensor_msgs cv_bridge std_msgs nav_msgs)
 
-
-# Install executables
-add_executable(track_error_driver src/track_error_driver.cpp src/vision_driver.cpp)
-ament_target_dependencies(track_error_driver ${dependencies})
-install(TARGETS track_error_driver
-        DESTINATION lib/${PROJECT_NAME})
-
-add_executable(potential_field_driver src/potential_field_driver.cpp src/vision_driver.cpp)
-ament_target_dependencies(potential_field_driver ${dependencies})
-install(TARGETS potential_field_driver
-        DESTINATION lib/${PROJECT_NAME})
-
-add_executable(image_capture src/image_capture.cpp)
-ament_target_dependencies(image_capture ${dependencies})
-install(TARGETS image_capture
+add_executable(aggregator_node src/aggregator_node.cpp src/aggregator.cpp)
+ament_target_dependencies(aggregator_node ${dependencies})
+install(TARGETS aggregator_node
         DESTINATION lib/${PROJECT_NAME})
 
 
 # Resolve and install include filepaths
 include_directories(
-  ${OpenCV_INCLUDE_DIRS}
   src
 )
 

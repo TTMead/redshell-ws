@@ -1,22 +1,19 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>beboop_vision</name>
+  <name>redshell_io</name>
   <version>0.0.1</version>
-  <description>Provides vision processing nodes for the beboop robots</description>
+  <description>Contains interfacing nodes for the Redshell base robot platform</description>
   <maintainer email="timothy.mead20@gmail.com">Timothy Mead</maintainer>
-  <license>MIT license</license>
+  <license>MIT License</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclcpp</depend>
+  <depend>geometry_msgs</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-
-  <depend>rclcpp</depend>
-  <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>cv_bridge</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
