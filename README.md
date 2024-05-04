@@ -2,7 +2,10 @@
 This repo contains the ROS2 Humble workspace for the redshell droid.
 
 ## Architecture
-![](documentation/architecture.drawio.png)
+<p align="center">  
+  <img src="documentation/architecture.drawio.png">  
+</p>  
+
 
 ## Setup Instructions
 - Install Ubuntu 22 Desktop
