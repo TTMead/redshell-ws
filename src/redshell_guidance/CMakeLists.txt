@@ -7,8 +7,14 @@ endif()
 
 # Resolve Dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+set(dependencies rclcpp tf2_ros tf2 geometry_msgs nav_msgs)
 
-add_executable(path_planner src/path_planner.cpp)
+add_executable(path_planner src/path_planner.cpp src/path_planner_node.cpp)
 ament_target_dependencies(path_planner ${dependencies})
 install(TARGETS path_planner
   DESTINATION lib/${PROJECT_NAME})
