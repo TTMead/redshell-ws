@@ -16,14 +16,14 @@ class Aggregator : public rclcpp::Node
 
 	private:
         /**
-         * @brief Called at a regular rate by a ROS timer, once initialised.
+         * @brief 
          */
-		void update();
+		void filter_costmap();
 
         /**
          * @brief Publishes the aggregated costmap.
          */
-		void publish();
+		void publish_costmap();
 
         /**
          * @brief Initialises the internal aggregate occupancy_grid.
@@ -94,8 +94,49 @@ class Aggregator : public rclcpp::Node
             grid.data[index] = value;
         }
 
+        static inline void median_filter(nav_msgs::msg::OccupancyGrid& grid)
+        {
+            nav_msgs::msg::OccupancyGrid new_grid = grid;
+
+            // For each cell
+            for (int32_t col = 1; col < static_cast<int32_t>(grid.info.width - 1); col++)
+            {
+                for (int32_t row = 1; row < static_cast<int32_t>(grid.info.height - 1); row++)
+                {
+                    // Apply a 3x3 median filter kernel
+                    std::vector<int8_t> kernel;
+                    for (int8_t x = -1; x < 2; x++)
+                    {
+                        for (int8_t y = -1; y < 2; y++)
+                        {
+                            const uint64_t kernel_index = (col + x) + ((row + y) * grid.info.width);
+                            kernel.push_back(grid.data[kernel_index]);
+                        }
+                    }
+                    const uint64_t cell_index = col + (row * grid.info.width);
+                    new_grid.data[cell_index] = kernel[4];
+                }
+            }
+
+            grid = new_grid;
+        }
+
+        static inline void fade(nav_msgs::msg::OccupancyGrid& grid, int8_t magnitude)
+        {
+            for (int32_t col = 1; col < static_cast<int32_t>(grid.info.width - 1); col++)
+            {
+                for (int32_t row = 1; row < static_cast<int32_t>(grid.info.height - 1); row++)
+                {
+                    const uint64_t cell_index = col + (row * grid.info.width);
+                    int8_t faded_value = std::max(grid.data[cell_index] + magnitude, 0);
+                    grid.data[cell_index] = faded_value;
+                }
+            }
+        }
+
 		nav_msgs::msg::OccupancyGrid _aggregated_occupancy_grid;
-		rclcpp::TimerBase::SharedPtr _timer;
+		rclcpp::TimerBase::SharedPtr _publish_timer;
+		rclcpp::TimerBase::SharedPtr _filter_timer;
 
         std::shared_ptr<tf2_ros::Buffer> _tf_buffer;
         std::shared_ptr<tf2_ros::TransformListener> _tf_listener;
