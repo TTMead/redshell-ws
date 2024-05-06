@@ -39,11 +39,23 @@ Aggregator::Aggregator() : Node("aggregator_node")
 }
 
 void
+Aggregator::publish_costmap()
+{
+	_aggregated_occupancy_grid.header.stamp = rclcpp::Node::now();
+    _aggregate_grid_pub->publish(_aggregated_occupancy_grid);
+}
+
+void
+Aggregator::filter_costmap()
+{
+	fade(_aggregated_occupancy_grid, -3);
+}
+
+void
 Aggregator::potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
 	combine_costmaps(_aggregated_occupancy_grid, *msg);
 }
-
 
 void
 Aggregator::combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs::msg::OccupancyGrid& new_grid)
@@ -83,12 +95,6 @@ Aggregator::combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs:
 }
 
 void
-Aggregator::filter_costmap()
-{
-	fade(_aggregated_occupancy_grid, -3);
-}
-
-void
 Aggregator::initialise_occupancy_grid_msg()
 {
     static constexpr float costmap_resolution_m_per_cell = 0.05;
@@ -114,13 +120,4 @@ Aggregator::initialise_occupancy_grid_msg()
             _aggregated_occupancy_grid.data.push_back(0);
         }
     }
-}
-
-
-void
-Aggregator::publish_costmap()
-{
-	_aggregated_occupancy_grid.header.stamp = rclcpp::Node::now();
-
-    _aggregate_grid_pub->publish(_aggregated_occupancy_grid);
 }
