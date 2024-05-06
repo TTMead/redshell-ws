@@ -16,7 +16,7 @@ class Aggregator : public rclcpp::Node
 
 	private:
         /**
-         * @brief 
+         * @brief Applies the filter pipeline to the aggregated costmap.
          */
 		void filter_costmap();
 
@@ -94,6 +94,11 @@ class Aggregator : public rclcpp::Node
             grid.data[index] = value;
         }
 
+        /**
+         * @brief Applys a 3x3 median filter over the provided occupancy grid.
+         * 
+         * @param grid The occupancy grid to filter.
+         */
         static inline void median_filter(nav_msgs::msg::OccupancyGrid& grid)
         {
             nav_msgs::msg::OccupancyGrid new_grid = grid;
@@ -121,6 +126,13 @@ class Aggregator : public rclcpp::Node
             grid = new_grid;
         }
 
+        /**
+         * @brief Applys an additive filter to the an occupancy grid. The cells
+         * after filtering are clamped to positive values.
+         * 
+         * @param grid The occupancy grid to filter.
+         * @param magnitude The value to add to each cell.
+         */
         static inline void fade(nav_msgs::msg::OccupancyGrid& grid, int8_t magnitude)
         {
             for (int32_t col = 1; col < static_cast<int32_t>(grid.info.width - 1); col++)
