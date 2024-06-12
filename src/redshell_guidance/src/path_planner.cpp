@@ -38,11 +38,11 @@ PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad)
     {
         for (int32_t row = 1; row < static_cast<int32_t>(costmap.info.height - 1); row++)
         {
-            const uint64_t cell_index = col + (row * costmap.info.width);
+            const int64_t cell_index = col + (row * costmap.info.width);
 
             // Add directional wave function
-            const double wave_function_value = std::clamp(min_wave_value + (std::sin(bearing_rad) * col * (1.0 / costmap.info.width))
-                                                                         + (std::cos(bearing_rad) * row * (1.0 / costmap.info.height)),
+            const double wave_function_value = std::clamp(min_wave_value + (std::sin(bearing_rad) * (static_cast<double>(col) / costmap.info.width))
+                                                                         + (std::cos(bearing_rad) * (static_cast<double>(row) / costmap.info.height)),
                                                           min_wave_value, max_wave_value);
             costmap.data[cell_index] += static_cast<int8_t>(std::round(wave_function_value));
         }
@@ -91,7 +91,7 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
         {
             for (int8_t y = -1; y < 2; y++)
             {
-                const uint64_t kernel_index = (col + x) + ((row + y) * costmap.info.width);
+                const int64_t kernel_index = (col + x) + ((row + y) * costmap.info.width);
                 const int8_t cell_value = costmap.data[kernel_index];
 
                 // Save cell if new minimum is found
