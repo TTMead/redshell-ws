@@ -9,7 +9,7 @@ PathPlanner::PathPlanner() : Node("path_planner_node")
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
 
     _occupancy_grid_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-        this->get_parameter("potential_field_combined").as_string(), 10, 
+        this->get_parameter("occupancy_grid_topic").as_string(), 10, 
         std::bind(&PathPlanner::occupancy_grid_callback, this, std::placeholders::_1)
     );
 
