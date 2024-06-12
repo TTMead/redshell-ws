@@ -12,7 +12,7 @@ class PathPlanner : public rclcpp::Node
     private:
         void occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
         void add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad);
-
+        nav_msgs::msg::Path generate_path(nav_msgs::msg::OccupancyGrid& costmap);
 
         std::shared_ptr<tf2_ros::Buffer> _tf_buffer;
         std::shared_ptr<tf2_ros::TransformListener> _tf_listener;
