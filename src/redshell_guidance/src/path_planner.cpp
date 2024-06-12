@@ -78,12 +78,12 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
     const double costmap_resolution_m_per_cell = costmap.info.resolution;
     int32_t row = std::round(next_path_location.pose.position.x / costmap_resolution_m_per_cell);
     int32_t col = std::round(next_path_location.pose.position.y / costmap_resolution_m_per_cell);
+    int8_t min_value = INT8_MAX;
 
     bool path_complete = false;
     while(!path_complete)
     {
         // Look at immediate neighbours
-        int8_t min_value = INT8_MAX;
         int32_t col_next = col;
         int32_t row_next = row;
 
