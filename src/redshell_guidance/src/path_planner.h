@@ -18,5 +18,6 @@ class PathPlanner : public rclcpp::Node
         std::shared_ptr<tf2_ros::TransformListener> _tf_listener;
 
         rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr _occupancy_grid_sub;
+        rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _distance_transform_pub;
         rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr _path_pub;
 };

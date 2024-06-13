@@ -15,6 +15,7 @@ PathPlanner::PathPlanner() : Node("path_planner_node")
 
 
     _path_pub = this->create_publisher<nav_msgs::msg::Path>(this->get_parameter("path_topic").as_string(), 10);
+    _distance_transform_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("distance_transform", 10);
 }
 
 void
@@ -30,8 +31,8 @@ PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedP
 void
 PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad)
 {
-    static constexpr double max_wave_value = 30;
-    static constexpr double min_wave_value = -30;
+    static constexpr double max_wave_value = 80;
+    static constexpr double min_wave_value = -80;
 
     // For each cell
     for (int32_t col = 1; col < static_cast<int32_t>(costmap.info.width - 1); col++)
@@ -41,18 +42,21 @@ PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad)
             const int64_t cell_index = col + (row * costmap.info.width);
 
             // Add directional wave function
-            const double wave_function_value = std::clamp(min_wave_value + (std::sin(bearing_rad) * (static_cast<double>(col) / costmap.info.width))
-                                                                         + (std::cos(bearing_rad) * (static_cast<double>(row) / costmap.info.height)),
+            const double wave_function_value = std::clamp(min_wave_value + (std::sin(bearing_rad) * (static_cast<double>(col) / static_cast<double>(costmap.info.width)) * (max_wave_value - min_wave_value))
+                                                                         + (std::cos(bearing_rad) * (static_cast<double>(row) / static_cast<double>(costmap.info.height)) * (max_wave_value - min_wave_value)),
                                                           min_wave_value, max_wave_value);
             costmap.data[cell_index] += static_cast<int8_t>(std::round(wave_function_value));
         }
     }
+
+    _distance_transform_pub->publish(costmap);
 }
 
 nav_msgs::msg::Path
 PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
 {
     nav_msgs::msg::Path path;
+    path.header.frame_id = "map";
 
     geometry_msgs::msg::TransformStamped map_to_robot;
     try
@@ -67,19 +71,27 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
         return path;
     }
 
-    // Initialise path with current robot position
     geometry_msgs::msg::PoseStamped next_path_location;
     next_path_location.pose.position.x = map_to_robot.transform.translation.x;
     next_path_location.pose.position.y = map_to_robot.transform.translation.y;
     next_path_location.pose.position.z = map_to_robot.transform.translation.z;
     next_path_location.pose.orientation = map_to_robot.transform.rotation;
-    path.poses.push_back(next_path_location);
 
     const double costmap_resolution_m_per_cell = costmap.info.resolution;
-    int32_t row = std::round(next_path_location.pose.position.x / costmap_resolution_m_per_cell);
-    int32_t col = std::round(next_path_location.pose.position.y / costmap_resolution_m_per_cell);
-    int8_t min_value = INT8_MAX;
+    int32_t row = std::round((next_path_location.pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
+    int32_t col = std::round((next_path_location.pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
 
+    if ((row <= 0) || (row >= static_cast<int32_t>(costmap.info.height))
+     || (col <= 0) || (col >= static_cast<int32_t>(costmap.info.width)))
+    {
+        RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Robot is outside of aggregate costmap");
+        return path;
+    }
+
+    // Initialise path with current robot position
+    path.poses.push_back(next_path_location);
+
+    int8_t min_value = INT8_MAX;
     bool path_complete = false;
     while(!path_complete)
     {
@@ -106,6 +118,14 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
 
         // If no updates are made, end the path discovery
         if (col == col_next && row == row_next)
+        {
+            path_complete = true;
+            continue;
+        }
+
+        // If reached edge of costmap, end the path discovery
+        if ((col_next <= 0) || (col_next >= static_cast<int32_t>(costmap.info.width-1))
+         || (row_next <= 0) || (row_next >= static_cast<int32_t>(costmap.info.height-1)))
         {
             path_complete = true;
             continue;
