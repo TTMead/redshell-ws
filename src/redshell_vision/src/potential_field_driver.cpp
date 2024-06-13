@@ -123,7 +123,7 @@ PotentialFieldDriver::add_bin_image_to_occupancy(cv::Mat binary_image)
             continue;
         }
 
-        static constexpr int8_t track_value = 80;
+        static constexpr int8_t track_value = 100;
         set_occupancy_grid_tile(row_index, column_index, track_value);
     }
 

@@ -22,7 +22,7 @@ void
 PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
     nav_msgs::msg::OccupancyGrid grid = *msg;
-    add_wave(grid, M_PI / 2.0);
+    add_wave(grid, M_PI / 4.0);
 
     nav_msgs::msg::Path path_msg = generate_path(grid);
     _path_pub->publish(path_msg);
@@ -31,8 +31,8 @@ PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedP
 void
 PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad)
 {
-    static constexpr double max_wave_value = 80;
-    static constexpr double min_wave_value = -80;
+    static constexpr double max_wave_value = 100;
+    static constexpr double min_wave_value = 0;
 
     // For each cell
     for (int32_t col = 1; col < static_cast<int32_t>(costmap.info.width - 1); col++)
