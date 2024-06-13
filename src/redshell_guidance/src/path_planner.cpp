@@ -22,7 +22,7 @@ void
 PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
     nav_msgs::msg::OccupancyGrid grid = *msg;
-    add_wave(grid, M_PI / 4.0);
+    add_wave(grid, 1.8);
 
     nav_msgs::msg::Path path_msg = generate_path(grid);
     _path_pub->publish(path_msg);
@@ -52,6 +52,12 @@ PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad)
     _distance_transform_pub->publish(costmap);
 }
 
+double
+PathPlanner::distance(int32_t from_row, int32_t from_col, int32_t to_row, int32_t to_col)
+{
+    return std::sqrt(std::pow(to_row - from_row, 2) + std::pow(to_col - from_col, 2));
+}
+
 nav_msgs::msg::Path
 PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
 {
@@ -78,11 +84,11 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
     next_path_location.pose.orientation = map_to_robot.transform.rotation;
 
     const double costmap_resolution_m_per_cell = costmap.info.resolution;
-    int32_t row = std::round((next_path_location.pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
-    int32_t col = std::round((next_path_location.pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
+    int32_t robot_row = std::round((next_path_location.pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
+    int32_t robot_col = std::round((next_path_location.pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
 
-    if ((row <= 0) || (row >= static_cast<int32_t>(costmap.info.height))
-     || (col <= 0) || (col >= static_cast<int32_t>(costmap.info.width)))
+    if ((robot_row <= 0) || (robot_row >= static_cast<int32_t>(costmap.info.height))
+     || (robot_col <= 0) || (robot_col >= static_cast<int32_t>(costmap.info.width)))
     {
         RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Robot is outside of aggregate costmap");
         return path;
@@ -90,8 +96,11 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
 
     // Initialise path with current robot position
     path.poses.push_back(next_path_location);
-
+    int32_t row = robot_row;
+    int32_t col = robot_col;
     int8_t min_value = INT8_MAX;
+    double current_distance_from_robot = 0.0;
+
     bool path_complete = false;
     while(!path_complete)
     {
@@ -106,12 +115,16 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
                 const int64_t kernel_index = (col + x) + ((row + y) * costmap.info.width);
                 const int8_t cell_value = costmap.data[kernel_index];
 
-                // Save cell if new minimum is found
-                if (cell_value < min_value)
+                // Save cell if new cell is found that is further away
+                if (cell_value <= min_value)
                 {
-                    min_value = cell_value;
-                    col_next = col + x;
-                    row_next = row + y;
+                    double new_distance_from_robot = distance(robot_row, robot_col, row + y, col + x);
+                    if (new_distance_from_robot > current_distance_from_robot)
+                    {
+                        min_value = cell_value;
+                        col_next = col + x;
+                        row_next = row + y;
+                    }
                 }
             }
         }
@@ -136,8 +149,8 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
         row = row_next;
 
         // Add the new point to path
-        next_path_location.pose.position.x = row * costmap_resolution_m_per_cell;
-        next_path_location.pose.position.y = col * costmap_resolution_m_per_cell;
+        next_path_location.pose.position.x = (row  - (costmap.info.height/2.0)) * costmap_resolution_m_per_cell;
+        next_path_location.pose.position.y = (col - (costmap.info.width/2.0)) * costmap_resolution_m_per_cell;
         path.poses.push_back(next_path_location);
     }
 
