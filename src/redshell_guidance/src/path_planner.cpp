@@ -73,7 +73,7 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
     }
     catch (tf2::TransformException &ex)
     {
-        RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+        RCLCPP_DEBUG(this->get_logger(), "Wating for state estimation: %s", ex.what());
         return path;
     }
 
