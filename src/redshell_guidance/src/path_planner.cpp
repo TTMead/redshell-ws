@@ -45,6 +45,12 @@ PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad)
             const double wave_function_value = std::clamp(min_wave_value + (std::sin(bearing_rad) * (static_cast<double>(col) / static_cast<double>(costmap.info.width)) * (max_wave_value - min_wave_value))
                                                                          + (std::cos(bearing_rad) * (static_cast<double>(row) / static_cast<double>(costmap.info.height)) * (max_wave_value - min_wave_value)),
                                                           min_wave_value, max_wave_value);
+            
+            if (costmap.data[cell_index] + wave_function_value > INT8_MAX)
+            {
+                RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Path planner attempted to overflow costmap cell");
+            }
+            
             costmap.data[cell_index] += static_cast<int8_t>(std::round(wave_function_value));
 
             // Clamp cell value to [0, 100]
