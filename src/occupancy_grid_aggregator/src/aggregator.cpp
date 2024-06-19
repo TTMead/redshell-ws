@@ -48,7 +48,7 @@ Aggregator::publish_costmap()
 void
 Aggregator::filter_costmap()
 {
-	fade(_aggregated_occupancy_grid, -3);
+	fade(_aggregated_occupancy_grid, -1);
 }
 
 void

@@ -1,5 +1,7 @@
 #include "path_planner.h"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 PathPlanner::PathPlanner() : Node("path_planner_node")
 {
     this->declare_parameter("occupancy_grid_topic", "potential_field_combined");
@@ -21,42 +23,78 @@ PathPlanner::PathPlanner() : Node("path_planner_node")
 void
 PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
-    nav_msgs::msg::OccupancyGrid grid = *msg;
-    add_wave(grid, 1.8);
+    geometry_msgs::msg::TransformStamped map_to_robot;
+    try
+    {
+        static constexpr char map_frame[] = "map";
+        static constexpr char robot_frame[] = "base_link";
+        map_to_robot = _tf_buffer->lookupTransform(map_frame, robot_frame, tf2::TimePointZero);
+    }
+    catch (tf2::TransformException &ex)
+    {
+        RCLCPP_DEBUG(this->get_logger(), "Wating for state estimation: %s", ex.what());
+        return;
+    }
 
-    nav_msgs::msg::Path path_msg = generate_path(grid);
+    // Extract heading from TF
+    tf2::Quaternion tf_quat;
+    tf2::fromMsg(map_to_robot.transform.rotation, tf_quat);
+    tf2::Matrix3x3 m(tf_quat);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    // Extract pose from TF
+    geometry_msgs::msg::Pose robot_pose;
+    robot_pose.position.x = map_to_robot.transform.translation.x;
+    robot_pose.position.y = map_to_robot.transform.translation.y;
+    robot_pose.position.z = map_to_robot.transform.translation.z;
+    robot_pose.orientation = map_to_robot.transform.rotation;
+
+    nav_msgs::msg::OccupancyGrid grid = *msg;
+    add_wave(grid, robot_pose, -yaw);
+
+    nav_msgs::msg::Path path_msg = generate_path(grid, map_to_robot);
     _path_pub->publish(path_msg);
 }
 
 void
-PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad)
+PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg::Pose& robot_pose, double bearing_rad)
 {
-    static constexpr double min_wave_value = 0;
-    static constexpr double max_wave_value = 50;
+    // Convert rover position to row/col
+    const double costmap_resolution_m_per_cell = costmap.info.resolution;
+    int32_t robot_col = std::round((robot_pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
+    int32_t robot_row = std::round((robot_pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
 
-    // For each cell
-    for (int32_t col = 1; col < static_cast<int32_t>(costmap.info.width - 1); col++)
+    if ((robot_row <= 0) || (robot_row >= static_cast<int32_t>(costmap.info.height))
+     || (robot_col <= 0) || (robot_col >= static_cast<int32_t>(costmap.info.width)))
     {
-        for (int32_t row = 1; row < static_cast<int32_t>(costmap.info.height - 1); row++)
+        RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Robot is outside of aggregate costmap");
+        return;
+    }
+
+    // For each cell in wave
+    static constexpr int8_t wave_dist = 40;
+    for (int8_t x = -wave_dist; x < wave_dist; x++)
+    {
+        for (int8_t y = -wave_dist; y < wave_dist; y++)
         {
-            const int64_t cell_index = col + (row * costmap.info.width);
-
-            // Add directional wave function
-            const double wave_function_value = std::clamp(min_wave_value + (std::sin(bearing_rad) * (static_cast<double>(col) / static_cast<double>(costmap.info.width)) * (max_wave_value - min_wave_value))
-                                                                         + (std::cos(bearing_rad) * (static_cast<double>(row) / static_cast<double>(costmap.info.height)) * (max_wave_value - min_wave_value)),
-                                                          min_wave_value, max_wave_value);
-            
-            if (costmap.data[cell_index] + wave_function_value > INT8_MAX)
+            // Ignore cells that are out of bounds
+            if ((robot_col + x <= 0) || (robot_col + x >= static_cast<int32_t>(costmap.info.width)) || (robot_row + y <= 0) || (robot_row + y >= static_cast<int32_t>(costmap.info.height)))
             {
-                RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Path planner attempted to overflow costmap cell");
+                continue;
             }
-            
-            costmap.data[cell_index] += static_cast<int8_t>(std::round(wave_function_value));
 
-            // Clamp cell value to [0, 100]
-            static constexpr int8_t min_cell_value = 0;
-            static constexpr int8_t max_cell_value = 100;
-            costmap.data[cell_index] = std::clamp(costmap.data[cell_index], min_cell_value, max_cell_value);
+            const int8_t value = -std::round((std::cos(bearing_rad) * x) + (-std::sin(bearing_rad) * y));
+            const int64_t cell_index = (robot_col + x) + ((robot_row + y) * costmap.info.width);
+
+            // If the new value will be too big, clamp it to the maximum int
+            if (costmap.data[cell_index] > (INT8_MAX - (value + wave_dist)))
+            {
+                costmap.data[cell_index] = INT8_MAX;
+                continue;
+            }
+
+            costmap.data[cell_index] += wave_dist + value;
         }
     }
 
@@ -70,23 +108,10 @@ PathPlanner::distance(int32_t from_row, int32_t from_col, int32_t to_row, int32_
 }
 
 nav_msgs::msg::Path
-PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
+PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg::TransformStamped& map_to_robot)
 {
     nav_msgs::msg::Path path;
     path.header.frame_id = "map";
-
-    geometry_msgs::msg::TransformStamped map_to_robot;
-    try
-    {
-        static constexpr char map_frame[] = "map";
-        static constexpr char robot_frame[] = "base_link";
-        map_to_robot = _tf_buffer->lookupTransform(map_frame, robot_frame, tf2::TimePointZero);
-    }
-    catch (tf2::TransformException &ex)
-    {
-        RCLCPP_DEBUG(this->get_logger(), "Wating for state estimation: %s", ex.what());
-        return path;
-    }
 
     geometry_msgs::msg::PoseStamped next_path_location;
     next_path_location.pose.position.x = map_to_robot.transform.translation.x;
@@ -95,8 +120,8 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
     next_path_location.pose.orientation = map_to_robot.transform.rotation;
 
     const double costmap_resolution_m_per_cell = costmap.info.resolution;
-    int32_t robot_row = std::round((next_path_location.pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
-    int32_t robot_col = std::round((next_path_location.pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
+    int32_t robot_row = std::round((next_path_location.pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
+    int32_t robot_col = std::round((next_path_location.pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
 
     if ((robot_row <= 0) || (robot_row >= static_cast<int32_t>(costmap.info.height))
      || (robot_col <= 0) || (robot_col >= static_cast<int32_t>(costmap.info.width)))
@@ -127,10 +152,10 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
                 const int8_t cell_value = costmap.data[kernel_index];
 
                 // Save cell if new cell is found that is further away
-                if (cell_value <= min_value)
+                if (cell_value < min_value)
                 {
                     double new_distance_from_robot = distance(robot_row, robot_col, row + y, col + x);
-                    if (new_distance_from_robot > current_distance_from_robot)
+                    if (new_distance_from_robot >= current_distance_from_robot)
                     {
                         min_value = cell_value;
                         col_next = col + x;
@@ -160,8 +185,8 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap)
         row = row_next;
 
         // Add the new point to path
-        next_path_location.pose.position.x = (row  - (costmap.info.height/2.0)) * costmap_resolution_m_per_cell;
-        next_path_location.pose.position.y = (col - (costmap.info.width/2.0)) * costmap_resolution_m_per_cell;
+        next_path_location.pose.position.y = (row  - (costmap.info.height/2.0)) * costmap_resolution_m_per_cell;
+        next_path_location.pose.position.x = (col - (costmap.info.width/2.0)) * costmap_resolution_m_per_cell;
         path.poses.push_back(next_path_location);
     }
 

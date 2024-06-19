@@ -11,8 +11,8 @@ class PathPlanner : public rclcpp::Node
 
     private:
         void occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
-        void add_wave(nav_msgs::msg::OccupancyGrid& costmap, double bearing_rad);
-        nav_msgs::msg::Path generate_path(nav_msgs::msg::OccupancyGrid& costmap);
+        void add_wave(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg::Pose& robot_pose, double bearing_rad);
+        nav_msgs::msg::Path generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg::TransformStamped& map_to_robot);
         double distance(int32_t from_row, int32_t from_col, int32_t to_row, int32_t to_col);
 
 
