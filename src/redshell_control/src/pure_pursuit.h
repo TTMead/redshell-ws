@@ -18,9 +18,28 @@ class PurePursuit : public rclcpp::Node
          */
         bool get_robot_pose(geometry_msgs::msg::Pose &robot_pose);
 
+        geometry_msgs::msg::Twist generate_control_command(geometry_msgs::msg::Pose &robot_pose, geometry_msgs::msg::Point &destination);
+
+        void run();
+
+        static constexpr double distance_between_points(const geometry_msgs::msg::Point &A, const geometry_msgs::msg::Point &B)
+        {
+            return std::sqrt(std::pow(B.x - A.x, 2)
+                           + std::pow(B.y - A.y, 2) 
+                           + std::pow(B.z - A.z, 2));
+        }
+
+        static constexpr double bearing_between_points(const geometry_msgs::msg::Point &from, const geometry_msgs::msg::Point &to)
+        {
+            return std::atan2(from.y - to.y, from.x - to.x);
+        }
+
+        std::optional<nav_msgs::msg::Path> _path;
+
         std::shared_ptr<tf2_ros::Buffer> _tf_buffer;
         std::shared_ptr<tf2_ros::TransformListener> _tf_listener;
 
         rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr _path_sub;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _cmd_vel_pub;
+        rclcpp::TimerBase::SharedPtr _run_timer;
 };

@@ -3,6 +3,7 @@
 PurePursuit::PurePursuit() : Node("pure_pursuit_node")
 {
     this->declare_parameter("path_topic", "path");
+    this->declare_parameter("look_ahead_dist_m", 0.3);
 
     _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
@@ -12,14 +13,47 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
         std::bind(&PurePursuit::path_callback, this, std::placeholders::_1)
     );
 
-
     _cmd_vel_pub = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
+
+    using namespace std::chrono_literals;
+    _run_timer = this->create_wall_timer(500ms, std::bind(&PurePursuit::run, this));
 }
+
+void
+PurePursuit::run()
+{
+    geometry_msgs::msg::Twist cmd_msg{};
+
+    geometry_msgs::msg::Pose robot_pose;
+
+    // If both a path and pose are available
+    if (_path.has_value() && get_robot_pose(robot_pose))
+    {
+        for (geometry_msgs::msg::PoseStamped &path_pose_stamped : _path->poses)
+        {
+            geometry_msgs::msg::Pose path_pose = path_pose_stamped.pose;
+            if (distance_between_points(path_pose.position, robot_pose.position) > this->get_parameter("look_ahead_dist_m").as_double())
+            {
+                cmd_msg = generate_control_command(robot_pose, path_pose.position);
+                break;
+            }
+        }
+    }
+
+    _cmd_vel_pub->publish(cmd_msg);
+}
+
+geometry_msgs::msg::Twist
+PurePursuit::generate_control_command(geometry_msgs::msg::Pose &robot_pose, geometry_msgs::msg::Point &destination)
+{
+
+}
+
 
 void
 PurePursuit::path_callback(const nav_msgs::msg::Path::SharedPtr msg)
 {
-    
+    _path = *msg;
 }
 
 bool
