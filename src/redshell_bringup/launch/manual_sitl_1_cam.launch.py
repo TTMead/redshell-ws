@@ -41,6 +41,17 @@ def generate_launch_description():
             ]
         ),
 
+        # ==== Path Planner ====
+        launch_ros.actions.Node(
+            package='redshell_guidance',
+            executable='path_planner',
+            name='path_planner',
+            parameters=[
+                {"occupancy_grid_topic": "/potential_field_combined"}, 
+                {"path_topic": "/path"}
+            ]
+        ),
+
         # ==== Joystick ====
         launch_ros.actions.Node(
             package='teleop_twist_joy',
@@ -64,7 +75,7 @@ def generate_launch_description():
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
-            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("redshell_bringup"), 'config', 'state_estimation_params.yaml')]
+            parameters=[{"use_sim_time": False}, os.path.join(get_package_share_directory("redshell_bringup"), 'config', 'state_estimation_params.yaml')]
         ),
         
         # ==== Static Broadcasters ====
@@ -77,15 +88,5 @@ def generate_launch_description():
             package='tf2_ros',
             executable='static_transform_publisher',
             arguments=["0.164", "0", "0.428", "0", "0", "0", "base_link", "front_cam"]
-        ),
-        launch_ros.actions.Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            arguments=["0.164", "0", "0.428", "45", "0", "0", "base_link", "left_cam"]
-        ),
-        launch_ros.actions.Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            arguments=["0.164", "0", "0.428", "-45", "0", "0", "base_link", "right_cam"]
-        ),
+        )
     ])
