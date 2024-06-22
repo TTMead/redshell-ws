@@ -4,6 +4,9 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
 {
     this->declare_parameter("path_topic", "path");
     this->declare_parameter("look_ahead_dist_m", 0.3);
+    this->declare_parameter("yaw_gain", 1.0);
+    this->declare_parameter("max_yaw_rate", 1.0);
+    this->declare_parameter("forward_velocity", 0.4);
 
     _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
@@ -44,11 +47,20 @@ PurePursuit::run()
 }
 
 geometry_msgs::msg::Twist
-PurePursuit::generate_control_command(geometry_msgs::msg::Pose &robot_pose, geometry_msgs::msg::Point &destination)
+PurePursuit::generate_control_command(geometry_msgs::msg::Pose &robot_pose, geometry_msgs::msg::Point &goal)
 {
+    const double desired_bearing_rad = bearing_between_points(robot_pose.position, goal);
+    const double current_bearing_rad = heading_from_orientation(robot_pose.orientation);
+    const double yaw_error_rad = subtract_angles(desired_bearing_rad, current_bearing_rad);
 
+    double yaw_effort_rads = this->get_parameter("yaw_gain").as_double() * (-yaw_error_rad);
+    yaw_effort_rads = std::clamp(yaw_effort_rads, this->get_parameter("max_yaw_rate").as_double(), -this->get_parameter("max_yaw_rate").as_double());
+
+    geometry_msgs::msg::Twist control_command{};
+    control_command.linear.x = this->get_parameter("forward_velocity").as_double();
+    control_command.angular.z = yaw_effort_rads;
+    return control_command;
 }
-
 
 void
 PurePursuit::path_callback(const nav_msgs::msg::Path::SharedPtr msg)

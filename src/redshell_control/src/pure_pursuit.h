@@ -18,9 +18,25 @@ class PurePursuit : public rclcpp::Node
          */
         bool get_robot_pose(geometry_msgs::msg::Pose &robot_pose);
 
-        geometry_msgs::msg::Twist generate_control_command(geometry_msgs::msg::Pose &robot_pose, geometry_msgs::msg::Point &destination);
+        geometry_msgs::msg::Twist generate_control_command(geometry_msgs::msg::Pose &robot_pose, geometry_msgs::msg::Point &goal);
 
         void run();
+
+        static double subtract_angles(double target_rad, double source_rad)
+        {
+            double result = target_rad - source_rad;
+            result = std::fmod((result + M_PI_2), M_PI) - M_PI;
+            return result;
+        }
+
+        static double heading_from_orientation(geometry_msgs::msg::Quaternion &orientation)
+        {
+            tf2::Quaternion q(orientation.x, orientation.y, orientation.z, orientation.w);
+            tf2::Matrix3x3 m(q);
+            double roll_rad, pitch_rad, yaw_rad;
+            m.getRPY(roll_rad, pitch_rad, yaw_rad);
+            return yaw_rad;
+        }
 
         static constexpr double distance_between_points(const geometry_msgs::msg::Point &A, const geometry_msgs::msg::Point &B)
         {
