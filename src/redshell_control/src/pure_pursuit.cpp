@@ -4,9 +4,9 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
 {
     this->declare_parameter("path_topic", "path");
     this->declare_parameter("look_ahead_dist_m", 0.3);
-    this->declare_parameter("yaw_gain", 1.0);
+    this->declare_parameter("yaw_gain", 0.1);
     this->declare_parameter("max_yaw_rate", 1.0);
-    this->declare_parameter("forward_velocity", 0.4);
+    this->declare_parameter("forward_velocity", 0.1);
 
     _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
