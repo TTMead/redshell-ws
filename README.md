@@ -23,6 +23,6 @@ docker compose -f docker/compose.yaml run redshell
 The redshell launch files can be found in `src/redshell_bringup/launch/`. To bringup one of these configurations, enter
 docker container and run,
 ```bash
-source install/setup.bash
+colcon build && source install/setup.bash
 ros2 launch redshell_bringup [launch file]
 ```
