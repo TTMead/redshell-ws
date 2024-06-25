@@ -110,10 +110,14 @@ PathPlanner::distance(int32_t from_row, int32_t from_col, int32_t to_row, int32_
 nav_msgs::msg::Path
 PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg::TransformStamped& map_to_robot)
 {
+    static constexpr char path_frame_id[] = "map";
+
     nav_msgs::msg::Path path;
-    path.header.frame_id = "map";
+    path.header.frame_id = path_frame_id;
 
     geometry_msgs::msg::PoseStamped next_path_location;
+    next_path_location.header.frame_id = path_frame_id;
+    next_path_location.header.stamp = this->get_clock()->now();
     next_path_location.pose.position.x = map_to_robot.transform.translation.x;
     next_path_location.pose.position.y = map_to_robot.transform.translation.y;
     next_path_location.pose.position.z = map_to_robot.transform.translation.z;
@@ -187,8 +191,10 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs:
         // Add the new point to path
         next_path_location.pose.position.y = (row  - (costmap.info.height/2.0)) * costmap_resolution_m_per_cell;
         next_path_location.pose.position.x = (col - (costmap.info.width/2.0)) * costmap_resolution_m_per_cell;
+        next_path_location.header.stamp = this->get_clock()->now();
         path.poses.push_back(next_path_location);
     }
 
+    path.header.stamp = this->get_clock()->now();
     return path;
 }
