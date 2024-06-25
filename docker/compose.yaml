@@ -1,0 +1,23 @@
+name: redshell
+services:
+  redshell:
+    build:
+      context: ../.
+      dockerfile: docker/Dockerfile
+      network: host
+      target: base
+    network_mode: host
+    ipc: host
+    volumes:
+      - ../.:/opt/redshell_ws/.
+      - /tmp/.X11-unix:/tmp/.X11-unix 
+      - /dev:/dev
+    working_dir: /opt/redshell_ws
+    privileged: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+      - PULSE_SERVER=${PULSE_SERVER}
+      - LIBGL_ALWAYS_SOFTWARE=1
