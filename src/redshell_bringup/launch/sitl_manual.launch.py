@@ -46,6 +46,7 @@ def generate_launch_description():
             executable='aggregator_node',
             name='aggregator_node',
             parameters=[
+                {"use_sim_time": True},
                 {"field_topics": ["/front_field"]}, 
                 {"aggregate_frame_id": "/map"}
             ]
@@ -57,6 +58,7 @@ def generate_launch_description():
             executable='path_planner',
             name='path_planner',
             parameters=[
+                {"use_sim_time": True},
                 {"occupancy_grid_topic": "/potential_field_combined"}, 
                 {"path_topic": "/path"}
             ]

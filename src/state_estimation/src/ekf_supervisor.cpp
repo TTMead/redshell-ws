@@ -2,7 +2,7 @@
 
 EkfSupervisor::EkfSupervisor() : Node("ekf_supervisor")
 {
-    this->declare_parameter("reset_distance_m", 10.0);
+    this->declare_parameter("reset_distance_m", 5.0);
 
     _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
