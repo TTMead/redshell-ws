@@ -92,13 +92,14 @@ EkfSupervisor::reset_ekf()
         RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, cannot reset EKF.");
     }
 
-    auto result = _set_pose_client->async_send_request(request);
-
-    // Wait for the result.
-    if (rclcpp::spin_until_future_complete(this->shared_from_this(), result) == rclcpp::FutureReturnCode::SUCCESS)
-    {
-        RCLCPP_INFO(this->get_logger(), "EKF has been reset");
-    } else {
-        RCLCPP_ERROR(this->get_logger(), "Failed to reset EKF");
-    }
+    auto result_future = _set_pose_client->async_send_request(request,
+        [this](rclcpp::Client<robot_localization::srv::SetPose>::SharedFuture future){
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready) {
+                RCLCPP_INFO(this->get_logger(), "EKF has been reset");
+            } else {
+                RCLCPP_INFO(this->get_logger(), "Failed to reset EKF");
+            }
+        }
+    );
 }

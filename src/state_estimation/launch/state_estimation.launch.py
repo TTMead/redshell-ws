@@ -19,6 +19,14 @@ def generate_launch_description():
             output='screen',
             parameters=[{"use_sim_time": False}, os.path.join(get_package_share_directory("state_estimation"), 'config', 'state_estimation_params.yaml')]
         ),
+
+        # ==== EKF Supervisor ====
+        Node(
+            package='state_estimation',
+            executable='ekf_supervisor',
+            name='ekf_supervisor',
+            output='screen'
+        ),
         
         # ==== Static Broadcasters ====
         Node(
