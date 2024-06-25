@@ -11,7 +11,8 @@ find_package(rclcpp REQUIRED)
 find_package(robot_localization REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
-set(DEPENDENCIES rclcpp robot_localization tf2_ros geometry_msgs)
+find_package(occupancy_grid_aggregator_srv REQUIRED)
+set(DEPENDENCIES rclcpp robot_localization tf2_ros geometry_msgs occupancy_grid_aggregator_srv)
 
 # Create Ekf Supervisor Executable
 add_executable(ekf_supervisor src/ekf_supervisor.cpp src/ekf_supervisor_node.cpp)

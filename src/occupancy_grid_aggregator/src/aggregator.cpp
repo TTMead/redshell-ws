@@ -36,6 +36,9 @@ Aggregator::Aggregator() : Node("aggregator_node")
 	_filter_timer = this->create_wall_timer(
 		500ms, std::bind(&Aggregator::filter_costmap, this)
 	);
+
+    using namespace std::placeholders;
+    _reset_aggregate_grid_service = this->create_service<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>("reset_aggregate_grid", std::bind(&Aggregator::reset_grid_service_callback, this, _1, _2));
 }
 
 void

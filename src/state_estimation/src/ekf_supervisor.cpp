@@ -1,5 +1,7 @@
 #include "ekf_supervisor.h"
 
+using namespace std::chrono_literals;
+
 EkfSupervisor::EkfSupervisor() : Node("ekf_supervisor")
 {
     this->declare_parameter("reset_distance_m", 15.0);
@@ -7,10 +9,10 @@ EkfSupervisor::EkfSupervisor() : Node("ekf_supervisor")
     _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
 
-    using namespace std::chrono_literals;
     _run_timer = this->create_wall_timer(100ms, std::bind(&EkfSupervisor::run, this));
 
     _set_pose_client = this->create_client<robot_localization::srv::SetPose>("set_pose");
+    _reset_aggregate_grid_client = this->create_client<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>("reset_aggregate_grid");
 }
 
 void
@@ -79,20 +81,18 @@ static geometry_msgs::msg::PoseWithCovarianceStamped create_empty_pose(rclcpp::T
 void
 EkfSupervisor::reset_ekf()
 {
-    auto request = std::make_shared<robot_localization::srv::SetPose::Request>();
-    request->pose = create_empty_pose(this->get_clock()->now());
-
-    using namespace std::chrono_literals; 
+    auto ekf_setpose_request = std::make_shared<robot_localization::srv::SetPose::Request>();
+    ekf_setpose_request->pose = create_empty_pose(this->get_clock()->now());
     while (!_set_pose_client->wait_for_service(1s))
     {
         if (!rclcpp::ok())
         {
-            RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for EKF service. Exiting.");
         }
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Service not available, cannot reset EKF.");
+        RCLCPP_INFO(this->get_logger(), "Service not available, cannot reset EKF.");
     }
 
-    auto result_future = _set_pose_client->async_send_request(request,
+    auto ekf_result_future = _set_pose_client->async_send_request(ekf_setpose_request,
         [this](rclcpp::Client<robot_localization::srv::SetPose>::SharedFuture future){
             auto status = future.wait_for(1s);
             if (status == std::future_status::ready) {
@@ -102,4 +102,30 @@ EkfSupervisor::reset_ekf()
             }
         }
     );
+
+
+    
+
+    auto grid_reset_request = std::make_shared<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Request>();
+    while (!_reset_aggregate_grid_client->wait_for_service(1s))
+    {
+        if (!rclcpp::ok())
+        {
+            RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for occupancy grid service. Exiting.");
+        }
+        RCLCPP_INFO(this->get_logger(), "Service not available, cannot reset EKF.");
+    }
+
+    auto grid_reset_result_future = _reset_aggregate_grid_client->async_send_request(grid_reset_request,
+        [this](rclcpp::Client<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>::SharedFuture future){
+            auto status = future.wait_for(1s);
+            if (status == std::future_status::ready) {
+                RCLCPP_INFO(this->get_logger(), "Occupancy grid has been reset");
+            } else {
+                RCLCPP_INFO(this->get_logger(), "Failed to reset occupancy grid");
+            }
+        }
+    );
+
+    
 }

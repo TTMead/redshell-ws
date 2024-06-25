@@ -3,6 +3,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <robot_localization/srv/set_pose.hpp>
+#include <occupancy_grid_aggregator_srv/srv/reset_aggregate_grid.hpp>
 
 class EkfSupervisor : public rclcpp::Node
 {
@@ -29,4 +30,5 @@ class EkfSupervisor : public rclcpp::Node
 
         rclcpp::TimerBase::SharedPtr _run_timer;
         rclcpp::Client<robot_localization::srv::SetPose>::SharedPtr _set_pose_client;
+        rclcpp::Client<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>::SharedPtr _reset_aggregate_grid_client;
 };

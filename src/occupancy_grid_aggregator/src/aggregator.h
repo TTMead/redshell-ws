@@ -159,4 +159,6 @@ class Aggregator : public rclcpp::Node
 
 		std::vector<field_sub> _potential_field_subs;
 		rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _aggregate_grid_pub;
+
+        rclcpp::Service<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>::SharedPtr _reset_aggregate_grid_service;
 };
