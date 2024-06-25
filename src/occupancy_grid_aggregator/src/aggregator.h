@@ -4,6 +4,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/point_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <occupancy_grid_aggregator_srv/srv/reset_aggregate_grid.hpp>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 
@@ -42,6 +43,9 @@ class Aggregator : public rclcpp::Node
          * @param new_grid The occupancy_grid to be merged.
          */
         void combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs::msg::OccupancyGrid& new_grid);
+
+        void reset_grid_service_callback(const std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Request> request, 
+            std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Response> response);
 
         /**
          * @brief Returns the world location of a given tile within an occupancy grid.
@@ -155,4 +159,6 @@ class Aggregator : public rclcpp::Node
 
 		std::vector<field_sub> _potential_field_subs;
 		rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _aggregate_grid_pub;
+
+        rclcpp::Service<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>::SharedPtr _reset_aggregate_grid_service;
 };

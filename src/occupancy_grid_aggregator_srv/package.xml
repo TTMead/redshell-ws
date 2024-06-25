@@ -1,24 +1,21 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>occupancy_grid_aggregator</name>
+  <name>occupancy_grid_aggregator_srv</name>
   <version>0.0.0</version>
-  <description>Combines multiple occupancy_grid messages into a single occupancy_grid message.</description>
+  <description>Services for the occupancy_grid_aggregator package</description>
   <maintainer email="timothy.mead20@gmail.com">Timothy Mead</maintainer>
-  <license>MIT License</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
-  <depend>rclcpp</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>occupancy_grid_aggregator_srv</depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

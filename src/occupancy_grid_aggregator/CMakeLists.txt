@@ -13,11 +13,12 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-set(dependencies rclcpp tf2_ros tf2 tf2_geometry_msgs geometry_msgs nav_msgs)
+find_package(occupancy_grid_aggregator_srv REQUIRED)
+set(DEPENDENCIES rclcpp tf2_ros tf2 tf2_geometry_msgs geometry_msgs nav_msgs occupancy_grid_aggregator_srv)
 
 
 add_executable(aggregator_node src/aggregator_node.cpp src/aggregator.cpp)
-ament_target_dependencies(aggregator_node ${dependencies})
+ament_target_dependencies(aggregator_node ${DEPENDENCIES})
 install(TARGETS aggregator_node
         DESTINATION lib/${PROJECT_NAME})
 

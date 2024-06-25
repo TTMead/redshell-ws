@@ -8,6 +8,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import EnvironmentVariable
 from launch_ros.actions import Node
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 def generate_launch_description():
@@ -17,6 +18,13 @@ def generate_launch_description():
             package='ros_tcp_endpoint',
             executable='default_server_endpoint',
             parameters=[{"ROS_IP": "127.0.0.1"}, {"ROS_TCP_PORT": 10000}]
+        ),
+
+        # ==== State Estimation ====
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('state_estimation'), 'launch/state_estimation.launch.py')
+            )
         ),
 
         # ==== Camera Drivers ====
@@ -38,6 +46,7 @@ def generate_launch_description():
             executable='aggregator_node',
             name='aggregator_node',
             parameters=[
+                {"use_sim_time": True},
                 {"field_topics": ["/front_field"]}, 
                 {"aggregate_frame_id": "/map"}
             ]
@@ -49,6 +58,7 @@ def generate_launch_description():
             executable='path_planner',
             name='path_planner',
             parameters=[
+                {"use_sim_time": True},
                 {"occupancy_grid_topic": "/potential_field_combined"}, 
                 {"path_topic": "/path"}
             ]
@@ -69,32 +79,6 @@ def generate_launch_description():
             package='joy',
             executable='joy_node',
             parameters=[{"use_sim_time": True}, {"autorepeat_rate": 20.0}]
-        ),
-
-        # ==== State Estimation ====
-        Node(
-            package='robot_localization',
-            executable='ekf_node',
-            name='ekf_filter_node',
-            output='screen',
-            parameters=[{"use_sim_time": False}, os.path.join(get_package_share_directory("redshell_bringup"), 'config', 'state_estimation_params.yaml')]
-        ),
-        
-        # ==== Static Broadcasters ====
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            arguments=["0", "0", "0", "0", "0", "0", "map", "odom"]
-        ),
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            arguments=["0.164", "0", "0.428", "0", "0", "0", "base_link", "front_cam"]
-        ),
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            arguments=["0", "0", "0", "0", "0", "0", "base_link", "imu"]
         ),
 
         # ==== Diagnostics ====
