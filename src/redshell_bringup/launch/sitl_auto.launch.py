@@ -1,24 +1,25 @@
-from launch import LaunchDescription
-from ament_index_python.packages import get_package_share_directory
-import launch_ros.actions
 import os
 import yaml
-from launch.substitutions import EnvironmentVariable
 import pathlib
-import launch.actions
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch_ros.actions import Node
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 def generate_launch_description():
     return LaunchDescription([
         # ==== Unity Interfacing ====
-        launch_ros.actions.Node(
+        Node(
             package='ros_tcp_endpoint',
             executable='default_server_endpoint',
             parameters=[{"ROS_IP": "127.0.0.1"}, {"ROS_TCP_PORT": 10000}]
         ),
 
         # ==== Camera Drivers ====
-        launch_ros.actions.Node(
+        Node(
             package='redshell_vision',
             executable='potential_field_driver',
             name='front_camera_driver',
@@ -31,7 +32,7 @@ def generate_launch_description():
         ),
 
         # ==== Occupancy Aggregator ====
-        launch_ros.actions.Node(
+        Node(
             package='occupancy_grid_aggregator',
             executable='aggregator_node',
             name='aggregator_node',
@@ -42,7 +43,7 @@ def generate_launch_description():
         ),
 
         # ==== Path Planner ====
-        launch_ros.actions.Node(
+        Node(
             package='redshell_guidance',
             executable='path_planner',
             name='path_planner',
@@ -53,7 +54,7 @@ def generate_launch_description():
         ),
 
         # ==== Pure Pursuit Controller ====
-        launch_ros.actions.Node(
+        Node(
             package='redshell_control',
             executable='pure_pursuit',
             name='pure_pursuit',
@@ -63,7 +64,7 @@ def generate_launch_description():
         ),
 
         # ==== State Estimation ====
-        launch_ros.actions.Node(
+        Node(
             package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node',
@@ -72,19 +73,26 @@ def generate_launch_description():
         ),
         
         # ==== Static Broadcasters ====
-        launch_ros.actions.Node(
+        Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             arguments=["0", "0", "0", "0", "0", "0", "map", "odom"]
         ),
-        launch_ros.actions.Node(
+        Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             arguments=["0.164", "0", "0.428", "0", "0", "0", "base_link", "front_cam"]
         ),
-        launch_ros.actions.Node(
+        Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             arguments=["0", "0", "0", "0", "0", "0", "base_link", "imu"]
+        ),
+
+        # ==== Diagnostics ====
+        IncludeLaunchDescription(
+            XMLLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('foxglove_bridge'),'launch/foxglove_bridge_launch.xml')
+            )
         )
     ])
