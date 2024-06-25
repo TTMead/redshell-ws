@@ -57,5 +57,6 @@ class PurePursuit : public rclcpp::Node
 
         rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr _path_sub;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _cmd_vel_pub;
+        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr _look_ahead_pub;
         rclcpp::TimerBase::SharedPtr _run_timer;
 };

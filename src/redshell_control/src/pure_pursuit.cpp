@@ -17,9 +17,10 @@ PurePursuit::PurePursuit() : Node("pure_pursuit_node")
     );
 
     _cmd_vel_pub = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
+    _look_ahead_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("/look_ahead", 10);
 
     using namespace std::chrono_literals;
-    _run_timer = this->create_wall_timer(500ms, std::bind(&PurePursuit::run, this));
+    _run_timer = this->create_wall_timer(100ms, std::bind(&PurePursuit::run, this));
 }
 
 void
@@ -37,6 +38,9 @@ PurePursuit::run()
             geometry_msgs::msg::Pose path_pose = path_pose_stamped.pose;
             if (distance_between_points(path_pose.position, robot_pose.position) > this->get_parameter("look_ahead_dist_m").as_double())
             {
+                // Publish look-ahead for debugging
+                _look_ahead_pub->publish(path_pose_stamped);
+
                 cmd_msg = generate_control_command(robot_pose, path_pose.position);
                 break;
             }
@@ -53,8 +57,8 @@ PurePursuit::generate_control_command(geometry_msgs::msg::Pose &robot_pose, geom
     const double current_bearing_rad = heading_from_orientation(robot_pose.orientation);
     const double yaw_error_rad = subtract_angles(desired_bearing_rad, current_bearing_rad);
 
-    double yaw_effort_rads = this->get_parameter("yaw_gain").as_double() * (-yaw_error_rad);
-    yaw_effort_rads = std::clamp(yaw_effort_rads, this->get_parameter("max_yaw_rate").as_double(), -this->get_parameter("max_yaw_rate").as_double());
+    double yaw_effort_rads = this->get_parameter("yaw_gain").as_double() * (yaw_error_rad);
+    yaw_effort_rads = std::clamp(yaw_effort_rads, -this->get_parameter("max_yaw_rate").as_double(), this->get_parameter("max_yaw_rate").as_double());
 
     geometry_msgs::msg::Twist control_command{};
     control_command.linear.x = this->get_parameter("forward_velocity").as_double();

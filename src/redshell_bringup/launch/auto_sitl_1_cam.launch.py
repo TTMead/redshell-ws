@@ -53,14 +53,14 @@ def generate_launch_description():
         ),
 
         # ==== Pure Pursuit Controller ====
-        # launch_ros.actions.Node(
-        #     package='redshell_control',
-        #     executable='pure_pursuit',
-        #     name='pure_pursuit',
-        #     parameters=[
-        #         {"path_topic": "/path"}
-        #     ]
-        # ),
+        launch_ros.actions.Node(
+            package='redshell_control',
+            executable='pure_pursuit',
+            name='pure_pursuit',
+            parameters=[
+                {"path_topic": "/path"}
+            ]
+        ),
 
         # ==== State Estimation ====
         launch_ros.actions.Node(
@@ -81,5 +81,10 @@ def generate_launch_description():
             package='tf2_ros',
             executable='static_transform_publisher',
             arguments=["0.164", "0", "0.428", "0", "0", "0", "base_link", "front_cam"]
+        ),
+        launch_ros.actions.Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            arguments=["0", "0", "0", "0", "0", "0", "base_link", "imu"]
         )
     ])
