@@ -63,7 +63,7 @@ def generate_launch_description():
             # parameters=[{"enable_button": 5}, {"axis_linear.x": 4}, {"axis_angular.yaw": 3}],
 
             # "2-Stick" configuration
-            parameters=[{"use_sim_time": True}, {"enable_button": 5}, {"axis_linear.x": 4}, {"axis_angular.yaw": 0}]
+            parameters=[{"use_sim_time": True}, {"enable_button": 10}, {"axis_linear.x": 3}, {"axis_angular.yaw": 0}]
         ),
         Node(
             package='joy',
