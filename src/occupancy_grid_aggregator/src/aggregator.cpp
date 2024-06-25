@@ -58,6 +58,26 @@ Aggregator::potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedP
 }
 
 void
+Aggregator::reset_grid_service_callback(const std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Request> request, 
+            std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Response> response)
+{
+    // Using std::ignore as request/response are defined as empty
+    std::ignore = request;
+    std::ignore = response;
+
+    RCLCPP_INFO(this->get_logger(), "Resetting occupancy grid");
+    
+    _aggregated_occupancy_grid.data.clear();
+    for (uint32_t row_index = 0; row_index < _aggregated_occupancy_grid.info.height; row_index++)
+    {
+        for (uint32_t column_index = 0; column_index < _aggregated_occupancy_grid.info.width; column_index++)
+        {
+            _aggregated_occupancy_grid.data.push_back(0);
+        }
+    }
+}
+
+void
 Aggregator::combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs::msg::OccupancyGrid& new_grid)
 {
     geometry_msgs::msg::TransformStamped transform;
