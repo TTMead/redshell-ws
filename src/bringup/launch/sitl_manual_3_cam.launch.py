@@ -19,7 +19,7 @@ def generate_launch_description():
 
         # ==== Camera Drivers ====
         launch_ros.actions.Node(
-            package='redshell_vision',
+            package='vision',
             executable='potential_field_driver',
             name='front_camera_driver',
             parameters=[
@@ -30,7 +30,7 @@ def generate_launch_description():
             ]
         ),
         launch_ros.actions.Node(
-            package='redshell_vision',
+            package='vision',
             executable='potential_field_driver',
             name='left_camera_driver',
             parameters=[
@@ -41,7 +41,7 @@ def generate_launch_description():
             ]
         ),
         launch_ros.actions.Node(
-            package='redshell_vision',
+            package='vision',
             executable='potential_field_driver',
             name='right_camera_driver',
             parameters=[

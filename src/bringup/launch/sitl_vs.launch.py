@@ -19,7 +19,7 @@ def generate_launch_description():
 
         # ==== Vision ====
         launch_ros.actions.Node(
-            package='redshell_vision',
+            package='vision',
             executable='track_error_driver',
             parameters=[{"is_sitl": True}],
         ),
