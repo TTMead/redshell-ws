@@ -25,10 +25,9 @@ def generate_launch_description():
         ),
 
         # ==== State Estimation ====
-        launch_ros.actions.Node(
-            package='redshell_bringup',
-            executable='vs_control',
-            output='screen',
-            parameters=[{"kp": 0.35},{"speed": 0.3}],
-           ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('state_estimation'), 'launch/state_estimation.launch.py')
+            )
+        )
     ])

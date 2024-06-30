@@ -70,12 +70,10 @@ def generate_launch_description():
         ),
 
         # ==== State Estimation ====
-        launch_ros.actions.Node(
-            package='robot_localization',
-            executable='ekf_node',
-            name='ekf_filter_node',
-            output='screen',
-            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("redshell_bringup"), 'config', 'state_estimation_params.yaml')]
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('state_estimation'), 'launch/state_estimation.launch.py')
+            )
         ),
         
         # ==== Static Broadcasters ====

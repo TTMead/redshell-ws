@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>redshell_bringup</name>
+  <name>bringup</name>
   <version>0.0.1</version>
   <description>Provides launch scripts and core interfacing nodes for redshell droid.</description>
   <maintainer email="timothy.mead20@gmail.com">Timothy Mead</maintainer>
