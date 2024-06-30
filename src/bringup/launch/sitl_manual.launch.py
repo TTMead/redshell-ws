@@ -54,7 +54,7 @@ def generate_launch_description():
 
         # ==== Path Planner ====
         Node(
-            package='redshell_guidance',
+            package='path_planning',
             executable='path_planner',
             name='path_planner',
             parameters=[

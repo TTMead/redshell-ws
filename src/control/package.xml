@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>redshell_control</name>
+  <name>control</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Contains nodes for handling path following using robot velocity commands</description>
   <maintainer email="timothy.mead20@gmail.com">timothy</maintainer>
   <license>MIT</license>
 

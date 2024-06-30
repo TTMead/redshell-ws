@@ -1,24 +1,29 @@
 cmake_minimum_required(VERSION 3.8)
-project(redshell_control)
+project(path_planning)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Dependencies
+# Resolve Dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-set(DEPENDENCIES rclcpp geometry_msgs nav_msgs tf2_ros)
+set(dependencies rclcpp tf2 tf2_geometry_msgs tf2_ros geometry_msgs nav_msgs)
 
-# Create Pure Pursuit Executable
-add_executable(pure_pursuit src/pure_pursuit.cpp src/pure_pursuit_node.cpp)
-ament_target_dependencies(pure_pursuit ${DEPENDENCIES})
-target_include_directories(pure_pursuit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_features(pure_pursuit PUBLIC cxx_std_17)
-install(TARGETS pure_pursuit DESTINATION lib/${PROJECT_NAME})
+add_executable(path_planner src/path_planner.cpp src/path_planner_node.cpp)
+ament_target_dependencies(path_planner ${dependencies})
+install(TARGETS path_planner
+  DESTINATION lib/${PROJECT_NAME})
+
+# Resolve and install include filepaths
+include_directories(
+  src
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
