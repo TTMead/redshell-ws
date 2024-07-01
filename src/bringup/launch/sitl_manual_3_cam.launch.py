@@ -19,7 +19,7 @@ def generate_launch_description():
 
         # ==== Camera Drivers ====
         launch_ros.actions.Node(
-            package='redshell_vision',
+            package='vision',
             executable='potential_field_driver',
             name='front_camera_driver',
             parameters=[
@@ -30,7 +30,7 @@ def generate_launch_description():
             ]
         ),
         launch_ros.actions.Node(
-            package='redshell_vision',
+            package='vision',
             executable='potential_field_driver',
             name='left_camera_driver',
             parameters=[
@@ -41,7 +41,7 @@ def generate_launch_description():
             ]
         ),
         launch_ros.actions.Node(
-            package='redshell_vision',
+            package='vision',
             executable='potential_field_driver',
             name='right_camera_driver',
             parameters=[
@@ -70,12 +70,10 @@ def generate_launch_description():
         ),
 
         # ==== State Estimation ====
-        launch_ros.actions.Node(
-            package='robot_localization',
-            executable='ekf_node',
-            name='ekf_filter_node',
-            output='screen',
-            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("redshell_bringup"), 'config', 'state_estimation_params.yaml')]
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('state_estimation'), 'launch/state_estimation.launch.py')
+            )
         ),
         
         # ==== Static Broadcasters ====

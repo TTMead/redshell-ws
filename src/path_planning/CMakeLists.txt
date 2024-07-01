@@ -1,34 +1,29 @@
 cmake_minimum_required(VERSION 3.8)
-project(redshell_bringup)
+project(path_planning)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Resolve dependencies
+# Resolve Dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-set(dependencies rclcpp geometry_msgs std_msgs nav_msgs)
+set(dependencies rclcpp tf2 tf2_geometry_msgs tf2_ros geometry_msgs nav_msgs)
 
-
-# Install executables
-add_executable(vs_control src/vs_control.cpp)
-ament_target_dependencies(vs_control ${dependencies})
-install(TARGETS vs_control
-        DESTINATION lib/${PROJECT_NAME})
+add_executable(path_planner src/path_planner.cpp src/path_planner_node.cpp)
+ament_target_dependencies(path_planner ${dependencies})
+install(TARGETS path_planner
+  DESTINATION lib/${PROJECT_NAME})
 
 # Resolve and install include filepaths
-include_directories(src include)
-
-# Install launch files
-install(
-  DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/
+include_directories(
+  src
 )
-
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

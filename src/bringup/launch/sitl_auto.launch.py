@@ -28,7 +28,7 @@ def generate_launch_description():
 
         # ==== Camera Drivers ====
         Node(
-            package='redshell_vision',
+            package='vision',
             executable='potential_field_driver',
             name='front_camera_driver',
             parameters=[
@@ -53,7 +53,7 @@ def generate_launch_description():
 
         # ==== Path Planner ====
         Node(
-            package='redshell_guidance',
+            package='path_planning',
             executable='path_planner',
             name='path_planner',
             parameters=[
@@ -65,7 +65,7 @@ def generate_launch_description():
 
         # ==== Pure Pursuit Controller ====
         Node(
-            package='redshell_control',
+            package='control',
             executable='pure_pursuit',
             name='pure_pursuit',
             parameters=[
