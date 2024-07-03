@@ -15,9 +15,8 @@ find_package(occupancy_grid_aggregator_srv REQUIRED)
 set(DEPENDENCIES rclcpp robot_localization tf2_ros geometry_msgs occupancy_grid_aggregator_srv)
 
 # Create Ekf Supervisor Executable
-add_executable(ekf_supervisor src/ekf_supervisor.cpp src/ekf_supervisor_node.cpp)
+add_executable(ekf_supervisor src/ekf_supervisor_node.cpp)
 ament_target_dependencies(ekf_supervisor ${DEPENDENCIES})
-target_include_directories(ekf_supervisor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(ekf_supervisor PUBLIC cxx_std_17)
 install(TARGETS ekf_supervisor DESTINATION lib/${PROJECT_NAME})
 

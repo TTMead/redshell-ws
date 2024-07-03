@@ -4,59 +4,77 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 
-class PurePursuit : public rclcpp::Node
+struct PurePursuitParams
 {
-    public:
-        PurePursuit();
+    const std::string path_topic;
+    const double look_ahead_dist_m;
+    const double yaw_gain;
+    const double max_yaw_rate;
+    const double forward_velocity;
+};
 
-    private:
-        void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
+class PurePursuit
+{
+public:
+    PurePursuit(const PurePursuitParams& params, const std::shared_ptr<rclcpp::Node>& node);
 
-        /**
-         * @brief Returns the latest robot_pose from the TF2 tree.
-         * @return True if a valid pose was found. False otherwise.
-         */
-        bool get_robot_pose(geometry_msgs::msg::Pose &robot_pose);
+    PurePursuit (const PurePursuit&) = delete;
+    PurePursuit& operator= (const PurePursuit&) = delete;
 
-        geometry_msgs::msg::Twist generate_control_command(geometry_msgs::msg::Pose &robot_pose, geometry_msgs::msg::Point &goal);
+    /**
+     * @brief Updates the path being followed.
+     */
+    void path_callback(const nav_msgs::msg::Path::SharedPtr msg);
 
-        void run();
+    /**
+     * @brief Runs the pure_pursuit control loop.
+     */
+    void run(geometry_msgs::msg::Twist& cmd_msg, geometry_msgs::msg::PoseStamped& look_ahead_msg);
+private:
 
-        static double subtract_angles(double target_rad, double source_rad)
-        {
-            double result = target_rad - source_rad;
-            result = std::fmod((result + M_PI_2), M_PI) - M_PI;
-            return result;
-        }
+    /**
+     * @brief Returns the latest robot_pose from the TF2 tree.
+     * @return True if a valid pose was found. False otherwise.
+     */
+    bool get_robot_pose(geometry_msgs::msg::Pose &robot_pose) const;
 
-        static double heading_from_orientation(geometry_msgs::msg::Quaternion &orientation)
-        {
-            tf2::Quaternion q(orientation.x, orientation.y, orientation.z, orientation.w);
-            tf2::Matrix3x3 m(q);
-            double roll_rad, pitch_rad, yaw_rad;
-            m.getRPY(roll_rad, pitch_rad, yaw_rad);
-            return yaw_rad;
-        }
+    /**
+     * @brief Implements a proportional control law on heading to move the robot towards the goal given the robot pose.
+     */
+    geometry_msgs::msg::Twist generate_control_command(const geometry_msgs::msg::Pose& robot_pose, const geometry_msgs::msg::Point& goal) const;
 
-        static constexpr double distance_between_points(const geometry_msgs::msg::Point &A, const geometry_msgs::msg::Point &B)
-        {
-            return std::sqrt(std::pow(B.x - A.x, 2)
-                           + std::pow(B.y - A.y, 2) 
-                           + std::pow(B.z - A.z, 2));
-        }
+    static inline double heading_from_orientation(const geometry_msgs::msg::Quaternion& orientation)
+    {
+        tf2::Quaternion q(orientation.x, orientation.y, orientation.z, orientation.w);
+        tf2::Matrix3x3 m(q);
+        double roll_rad, pitch_rad, yaw_rad;
+        m.getRPY(roll_rad, pitch_rad, yaw_rad);
+        return yaw_rad;
+    }
 
-        static constexpr double bearing_between_points(const geometry_msgs::msg::Point &from, const geometry_msgs::msg::Point &to)
-        {
-            return std::atan2(from.y - to.y, from.x - to.x);
-        }
+    static constexpr double subtract_angles(const double target_rad, const double source_rad)
+    {
+        double result_rad = target_rad - source_rad;
+        result_rad = std::fmod((result_rad + M_PI_2), M_PI) - M_PI;
+        return result_rad;
+    }
 
-        std::optional<nav_msgs::msg::Path> _path;
+    static constexpr double distance_between_points(const geometry_msgs::msg::Point& A, const geometry_msgs::msg::Point& B)
+    {
+        return std::sqrt(std::pow(B.x - A.x, 2)
+                        + std::pow(B.y - A.y, 2) 
+                        + std::pow(B.z - A.z, 2));
+    }
 
-        std::shared_ptr<tf2_ros::Buffer> _tf_buffer;
-        std::shared_ptr<tf2_ros::TransformListener> _tf_listener;
+    static constexpr double bearing_between_points(const geometry_msgs::msg::Point& from, const geometry_msgs::msg::Point& to)
+    {
+        return std::atan2(from.y - to.y, from.x - to.x);
+    }
 
-        rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr _path_sub;
-        rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _cmd_vel_pub;
-        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr _look_ahead_pub;
-        rclcpp::TimerBase::SharedPtr _run_timer;
+    const PurePursuitParams _params;
+
+    rclcpp::Node::SharedPtr _node;
+    std::optional<nav_msgs::msg::Path> _path;
+    std::shared_ptr<tf2_ros::Buffer> _tf_buffer;
+    std::shared_ptr<tf2_ros::TransformListener> _tf_listener;
 };
