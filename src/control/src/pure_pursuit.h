@@ -16,7 +16,10 @@ struct PurePursuitParams
 class PurePursuit
 {
 public:
-    PurePursuit(const PurePursuitParams& params, rclcpp::Node::SharedPtr node);
+    PurePursuit(const PurePursuitParams& params, const std::shared_ptr<rclcpp::Node>& node);
+
+    PurePursuit (const PurePursuit&) = delete;
+    PurePursuit& operator= (const PurePursuit&) = delete;
 
     /**
      * @brief Updates the path being followed.

@@ -1,6 +1,6 @@
 #include "pure_pursuit.h"
 
-PurePursuitParams get_pure_pursuit_params(rclcpp::Node::SharedPtr node)
+PurePursuitParams get_pure_pursuit_params(const std::shared_ptr<rclcpp::Node>& node)
 {
     node->declare_parameter("path_topic", "path");
     node->declare_parameter("look_ahead_dist_m", 0.3);
@@ -20,14 +20,12 @@ int main(int argc, char ** argv)
 {
     rclcpp::init(argc, argv);
 
-    rclcpp::Node::SharedPtr node = std::make_shared<rclcpp::Node>("pure_pursuit");
+    auto node = std::make_shared<rclcpp::Node>("pure_pursuit");
     const auto params = get_pure_pursuit_params(node);
     PurePursuit pure_pursuit_controller(params, node);
 
-    auto path_sub = node->create_subscription<nav_msgs::msg::Path>(
-        params.path_topic, 10, 
-        std::bind(&PurePursuit::path_callback, pure_pursuit_controller, std::placeholders::_1)
-    );
+    auto path_sub = node->create_subscription<nav_msgs::msg::Path>("path", 10, 
+        std::bind(&PurePursuit::path_callback, &pure_pursuit_controller, std::placeholders::_1));
 
     auto cmd_vel_pub = node->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
     auto look_ahead_pub = node->create_publisher<geometry_msgs::msg::PoseStamped>("/look_ahead", 10);

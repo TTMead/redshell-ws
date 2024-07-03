@@ -17,7 +17,7 @@ int main(int argc, char * argv[])
     {
         auto new_sub = node->create_subscription<nav_msgs::msg::OccupancyGrid>(
             field_topic, 10, 
-            std::bind(&Aggregator::potential_field_callback, aggregator, std::placeholders::_1)
+            std::bind(&Aggregator::potential_field_callback, &aggregator, std::placeholders::_1)
         );
 
         potential_field_subs.push_back(new_sub);
@@ -30,11 +30,11 @@ int main(int argc, char * argv[])
     });
 
     // Regularly filter the aggregate grid
-	auto filter_timer = node->create_wall_timer(std::chrono::milliseconds(500), std::bind(&Aggregator::filter_costmap, aggregator));
+	auto filter_timer = node->create_wall_timer(std::chrono::milliseconds(500), std::bind(&Aggregator::filter_costmap, &aggregator));
 
     // Initialise the grid resetting service
     auto reset_aggregate_grid_service = node->create_service<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>("reset_aggregate_grid",
-        std::bind(&Aggregator::reset_grid_service_callback, aggregator, std::placeholders::_1, std::placeholders::_2));
+        std::bind(&Aggregator::reset_grid_service_callback, &aggregator, std::placeholders::_1, std::placeholders::_2));
 
     rclcpp::spin(node);
     rclcpp::shutdown();

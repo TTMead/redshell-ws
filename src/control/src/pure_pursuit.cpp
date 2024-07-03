@@ -1,6 +1,6 @@
 #include "pure_pursuit.h"
 
-PurePursuit::PurePursuit(const PurePursuitParams& params, rclcpp::Node::SharedPtr node) : _params(params), _node(node)
+PurePursuit::PurePursuit(const PurePursuitParams& params, const std::shared_ptr<rclcpp::Node>& node) : _params(params), _node(node)
 {
     _tf_buffer.reset(new tf2_ros::Buffer(node->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
@@ -61,7 +61,7 @@ PurePursuit::get_robot_pose(geometry_msgs::msg::Pose &robot_pose) const
     }
     catch (tf2::TransformException &ex)
     {
-        RCLCPP_DEBUG_THROTTLE(_node->get_logger(), *_node->get_clock(), 1000, "Wating for state estimation: %s", ex.what());
+        RCLCPP_INFO_THROTTLE(_node->get_logger(), *_node->get_clock(), 1000, "Wating for state estimation: %s", ex.what());
         return false;
     }
     robot_pose.position.x = map_to_robot.transform.translation.x;

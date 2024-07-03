@@ -4,7 +4,7 @@
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-Aggregator::Aggregator(rclcpp::Node::SharedPtr node) : _node(node)
+Aggregator::Aggregator(const std::shared_ptr<rclcpp::Node>& node) : _node(node)
 {
 	initialise_occupancy_grid_msg();
 
