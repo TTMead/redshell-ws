@@ -2,22 +2,10 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-PathPlanner::PathPlanner() : Node("path_planner_node")
+PathPlanner::PathPlanner(const std::shared_ptr<rclcpp::Node>& node) : _node(node)
 {
-    this->declare_parameter("occupancy_grid_topic", "potential_field_combined");
-    this->declare_parameter("path_topic", "path");
-
-    _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
+    _tf_buffer.reset(new tf2_ros::Buffer(node->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
-
-    _occupancy_grid_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-        this->get_parameter("occupancy_grid_topic").as_string(), 10, 
-        std::bind(&PathPlanner::occupancy_grid_callback, this, std::placeholders::_1)
-    );
-
-
-    _path_pub = this->create_publisher<nav_msgs::msg::Path>(this->get_parameter("path_topic").as_string(), 10);
-    _distance_transform_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("distance_transform", 10);
 }
 
 void
@@ -32,7 +20,7 @@ PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedP
     }
     catch (tf2::TransformException &ex)
     {
-        RCLCPP_DEBUG(this->get_logger(), "Wating for state estimation: %s", ex.what());
+        RCLCPP_INFO_THROTTLE(_node->get_logger(), *(_node->get_clock()), 1000, "Wating for state estimation: %s", ex.what());
         return;
     }
 
@@ -53,12 +41,11 @@ PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::SharedP
     nav_msgs::msg::OccupancyGrid grid = *msg;
     add_wave(grid, robot_pose, -yaw);
 
-    nav_msgs::msg::Path path_msg = generate_path(grid, map_to_robot);
-    _path_pub->publish(path_msg);
+    _path = generate_path(grid, map_to_robot);
 }
 
 void
-PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg::Pose& robot_pose, double bearing_rad)
+PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, const geometry_msgs::msg::Pose& robot_pose, double bearing_rad)
 {
     // Convert rover position to row/col
     const double costmap_resolution_m_per_cell = costmap.info.resolution;
@@ -68,7 +55,7 @@ PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg:
     if ((robot_row <= 0) || (robot_row >= static_cast<int32_t>(costmap.info.height))
      || (robot_col <= 0) || (robot_col >= static_cast<int32_t>(costmap.info.width)))
     {
-        RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Robot is outside of aggregate costmap");
+        RCLCPP_ERROR_THROTTLE(_node->get_logger(), *(_node->get_clock()), 1000, "Robot is outside of aggregate costmap");
         return;
     }
 
@@ -98,17 +85,11 @@ PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg:
         }
     }
 
-    _distance_transform_pub->publish(costmap);
-}
-
-double
-PathPlanner::distance(int32_t from_row, int32_t from_col, int32_t to_row, int32_t to_col)
-{
-    return std::sqrt(std::pow(to_row - from_row, 2) + std::pow(to_col - from_col, 2));
+    _distance_transform = costmap;
 }
 
 nav_msgs::msg::Path
-PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs::msg::TransformStamped& map_to_robot)
+PathPlanner::generate_path(const nav_msgs::msg::OccupancyGrid& costmap, const geometry_msgs::msg::TransformStamped& map_to_robot)
 {
     static constexpr char path_frame_id[] = "map";
 
@@ -117,7 +98,7 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs:
 
     geometry_msgs::msg::PoseStamped next_path_location;
     next_path_location.header.frame_id = path_frame_id;
-    next_path_location.header.stamp = this->get_clock()->now();
+    next_path_location.header.stamp = _node->get_clock()->now();
     next_path_location.pose.position.x = map_to_robot.transform.translation.x;
     next_path_location.pose.position.y = map_to_robot.transform.translation.y;
     next_path_location.pose.position.z = map_to_robot.transform.translation.z;
@@ -130,7 +111,7 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs:
     if ((robot_row <= 0) || (robot_row >= static_cast<int32_t>(costmap.info.height))
      || (robot_col <= 0) || (robot_col >= static_cast<int32_t>(costmap.info.width)))
     {
-        RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Robot is outside of aggregate costmap");
+        RCLCPP_ERROR_THROTTLE(_node->get_logger(), *(_node->get_clock()), 1000, "Robot is outside of aggregate costmap");
         return path;
     }
 
@@ -191,10 +172,10 @@ PathPlanner::generate_path(nav_msgs::msg::OccupancyGrid& costmap, geometry_msgs:
         // Add the new point to path
         next_path_location.pose.position.y = (row  - (costmap.info.height/2.0)) * costmap_resolution_m_per_cell;
         next_path_location.pose.position.x = (col - (costmap.info.width/2.0)) * costmap_resolution_m_per_cell;
-        next_path_location.header.stamp = this->get_clock()->now();
+        next_path_location.header.stamp = _node->get_clock()->now();
         path.poses.push_back(next_path_location);
     }
 
-    path.header.stamp = this->get_clock()->now();
+    path.header.stamp = _node->get_clock()->now();
     return path;
 }
