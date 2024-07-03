@@ -4,48 +4,20 @@
 #include <tf2/convert.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-Aggregator::Aggregator() : Node("aggregator_node")
+Aggregator::Aggregator(rclcpp::Node::SharedPtr node) : _node(node)
 {
-    this->declare_parameter("field_topics", std::vector<std::string>({"/front_field"}));
-    this->declare_parameter("aggregate_frame_id", "map");
-
 	initialise_occupancy_grid_msg();
 
-    _tf_buffer.reset(new tf2_ros::Buffer(this->get_clock()));
+    _tf_buffer.reset(new tf2_ros::Buffer(node->get_clock()));
     _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
-
-    // Create subscription to all field topics
-    std::vector field_topics = this->get_parameter("field_topics").as_string_array();
-        using namespace std::chrono_literals;
-    for (std::string field_topic : field_topics)
-    {
-        field_sub new_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-            field_topic, 10, 
-            std::bind(&Aggregator::potential_field_callback, this, std::placeholders::_1)
-        );
-
-        _potential_field_subs.push_back(new_sub);
-    }
-
-	_aggregate_grid_pub = this->create_publisher<nav_msgs::msg::OccupancyGrid>("potential_field_combined", 10);
-
-	_publish_timer = this->create_wall_timer(
-		250ms, std::bind(&Aggregator::publish_costmap, this)
-	);
-
-	_filter_timer = this->create_wall_timer(
-		500ms, std::bind(&Aggregator::filter_costmap, this)
-	);
-
-    using namespace std::placeholders;
-    _reset_aggregate_grid_service = this->create_service<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>("reset_aggregate_grid", std::bind(&Aggregator::reset_grid_service_callback, this, _1, _2));
 }
 
-void
-Aggregator::publish_costmap()
+const nav_msgs::msg::OccupancyGrid
+Aggregator::get_occupancy_grid() const
 {
-	_aggregated_occupancy_grid.header.stamp = rclcpp::Node::now();
-    _aggregate_grid_pub->publish(_aggregated_occupancy_grid);
+    auto grid = _aggregated_occupancy_grid;
+    grid.header.stamp = _node->get_clock()->now();
+    return grid;
 }
 
 void
@@ -68,7 +40,7 @@ Aggregator::reset_grid_service_callback(const std::shared_ptr<occupancy_grid_agg
     std::ignore = request;
     std::ignore = response;
 
-    RCLCPP_INFO(this->get_logger(), "Resetting occupancy grid");
+    RCLCPP_INFO(_node->get_logger(), "Resetting occupancy grid");
     
     _aggregated_occupancy_grid.data.clear();
     for (uint32_t row_index = 0; row_index < _aggregated_occupancy_grid.info.height; row_index++)
@@ -90,7 +62,7 @@ Aggregator::combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs:
     }
     catch (tf2::TransformException &ex)
     {
-        RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+        RCLCPP_WARN(_node->get_logger(), "%s", ex.what());
         return;
     }
 

@@ -8,33 +8,37 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 
-class Aggregator : public rclcpp::Node
+class Aggregator
 {
-	typedef rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr field_sub;
-
 	public:
-		Aggregator();
+		Aggregator(rclcpp::Node::SharedPtr node);
 
-	private:
+        /**
+         * @brief Callback on the potential field subscriptions to combine.
+         */
+		void potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+
+        /**
+         * @brief Returns the aggregate occupancy grid stamped with the current time.
+         */
+        const nav_msgs::msg::OccupancyGrid get_occupancy_grid() const;
+
         /**
          * @brief Applies the filter pipeline to the aggregated costmap.
          */
 		void filter_costmap();
 
         /**
-         * @brief Publishes the aggregated costmap.
+         * @brief Resets the occupancy grid values.
          */
-		void publish_costmap();
+        void reset_grid_service_callback(const std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Request> request, 
+            std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Response> response);
+	private:
 
         /**
          * @brief Initialises the internal aggregate occupancy_grid.
          */
 		void initialise_occupancy_grid_msg();
-
-        /**
-         * @brief Callback on the potential field subscriptions to combine.
-         */
-		void potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
 
         /**
          * @brief Merges the information from a new occupancy_grid to an existing occupancy_grid.
@@ -43,9 +47,6 @@ class Aggregator : public rclcpp::Node
          * @param new_grid The occupancy_grid to be merged.
          */
         void combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs::msg::OccupancyGrid& new_grid);
-
-        void reset_grid_service_callback(const std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Request> request, 
-            std::shared_ptr<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid::Response> response);
 
         /**
          * @brief Returns the world location of a given tile within an occupancy grid.
@@ -151,14 +152,7 @@ class Aggregator : public rclcpp::Node
         }
 
 		nav_msgs::msg::OccupancyGrid _aggregated_occupancy_grid;
-		rclcpp::TimerBase::SharedPtr _publish_timer;
-		rclcpp::TimerBase::SharedPtr _filter_timer;
-
+        rclcpp::Node::SharedPtr _node;
         std::shared_ptr<tf2_ros::Buffer> _tf_buffer;
         std::shared_ptr<tf2_ros::TransformListener> _tf_listener;
-
-		std::vector<field_sub> _potential_field_subs;
-		rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _aggregate_grid_pub;
-
-        rclcpp::Service<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>::SharedPtr _reset_aggregate_grid_service;
 };
