@@ -2,8 +2,8 @@
 
 PurePursuit::PurePursuit(const PurePursuitParams& params, const std::shared_ptr<rclcpp::Node>& node) : _params(params), _node(node)
 {
-    _tf_buffer.reset(new tf2_ros::Buffer(node->get_clock()));
-    _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
+    _tf_buffer = std::make_shared<tf2_ros::Buffer>(node->get_clock());
+    _tf_listener = std::make_shared<tf2_ros::TransformListener>(*_tf_buffer);
 }
 
 void

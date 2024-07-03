@@ -8,8 +8,8 @@ Aggregator::Aggregator(const std::shared_ptr<rclcpp::Node>& node) : _node(node)
 {
 	initialise_occupancy_grid_msg();
 
-    _tf_buffer.reset(new tf2_ros::Buffer(node->get_clock()));
-    _tf_listener.reset(new tf2_ros::TransformListener(*_tf_buffer));
+    _tf_buffer = std::make_shared<tf2_ros::Buffer>(node->get_clock());
+    _tf_listener = std::make_shared<tf2_ros::TransformListener>(*_tf_buffer);
 }
 
 const nav_msgs::msg::OccupancyGrid
