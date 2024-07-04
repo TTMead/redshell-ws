@@ -12,6 +12,7 @@
 
 // Messaging headers
 #include "redshell/command.h"
+#include "redshell/imu.h"
 
 static constexpr char serial_port_location[] = "/dev/ttyACM0";
 static constexpr double cmdvel_timeout_s = 0.5; // The amount of time to wait for a cmd_vel msg before stopping motors
@@ -61,20 +62,30 @@ RedshellInterface::run()
 		char incoming_byte[1];
 		read(this->_serial_port, incoming_byte, 1);
 
+		// RCLCPP_INFO(this->get_logger(), "%c", incoming_byte[0]);
+
 		if (incoming_byte[0] == REDSHELL_START_BYTE)
 		{
 			_command_index = 0;
+			_reading_msg = true;
 		}
 
-		_command_buffer[_command_index] = incoming_byte[0];
-		_command_index++;
-
-		if (_command_index >= REDSHELL_MESSAGE_SIZE)
+		if (_reading_msg)
 		{
-			PacketInfo incoming_packet;
-			deserialize(incoming_packet, (uint8_t*)(_command_buffer));
+			_command_buffer[_command_index] = incoming_byte[0];
+			_command_index++;
 
-			RCLCPP_INFO(this->get_logger(), "From i/o: %u", incoming_packet.id);
+			if (_command_index >= REDSHELL_MESSAGE_SIZE)
+			{
+				PacketInfo incoming_packet;
+				deserialize(&incoming_packet, (uint8_t*)(_command_buffer));
+
+				uint16_t x, y, z;
+				msg_imu_decode(incoming_packet, &x, &y, &z);
+
+				RCLCPP_INFO(this->get_logger(), "From i/o: %u: (%d, %d, %d)", incoming_packet.id, x, y, z);
+				_reading_msg = false;
+			}
 		}
 	}
 }
