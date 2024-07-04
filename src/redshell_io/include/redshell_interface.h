@@ -26,4 +26,5 @@ private:
 	int _serial_port;
 	char _command_buffer[REDSHELL_MESSAGE_SIZE];
 	uint8_t _command_index{0};
+	std::thread _run_thread;
 };

@@ -13,7 +13,7 @@
 // Messaging headers
 #include "redshell/command.h"
 
-static constexpr char serial_port_location[] = "/dev/ttyUSB0";
+static constexpr char serial_port_location[] = "/dev/ttyACM0";
 static constexpr double cmdvel_timeout_s = 0.5; // The amount of time to wait for a cmd_vel msg before stopping motors
 static constexpr double cmdvel_min_period_s = 0.1; // The amount of time to ignore cmd_vel msg after one has been received
 static constexpr double motor_deadzone = 9.0; // The threshold of percentage PWM that causes the motor to start moving
@@ -41,36 +41,41 @@ RedshellInterface::RedshellInterface() : Node("redshell_interface")
 	);
 
 	// Initialise run loop timer for reading serial
-	_run_timer = this->create_wall_timer(
-    	std::chrono::milliseconds(10), 
-		std::bind(&RedshellInterface::run, this)
-	);
+	_run_thread = std::thread(std::bind(&RedshellInterface::run, this));
 }
 
 RedshellInterface::~RedshellInterface() {
 	close(this->_serial_port);
+
+	if (_run_thread.joinable())
+	{
+		_run_thread.join();
+	}
 }
 
 void
 RedshellInterface::run()
 {
-	char incoming_byte[1];
-	read(0, incoming_byte, 1);
-
-	if (incoming_byte[0] == REDSHELL_START_BYTE)
+	while (rclcpp::ok())
 	{
-		_command_index = 0;
-	}
+		char incoming_byte[1];
+		read(this->_serial_port, incoming_byte, 1);
 
-	_command_buffer[_command_index] = incoming_byte[0];
-	_command_index++;
+		if (incoming_byte[0] == REDSHELL_START_BYTE)
+		{
+			_command_index = 0;
+		}
 
-	if (_command_index >= REDSHELL_MESSAGE_SIZE)
-	{
-		PacketInfo incoming_packet;
-		deserialize(incoming_packet, (uint8_t*)(_command_buffer));
+		_command_buffer[_command_index] = incoming_byte[0];
+		_command_index++;
 
-		RCLCPP_INFO(this->get_logger(), "From i/o: %u", incoming_packet.id);
+		if (_command_index >= REDSHELL_MESSAGE_SIZE)
+		{
+			PacketInfo incoming_packet;
+			deserialize(incoming_packet, (uint8_t*)(_command_buffer));
+
+			RCLCPP_INFO(this->get_logger(), "From i/o: %u", incoming_packet.id);
+		}
 	}
 }
 
