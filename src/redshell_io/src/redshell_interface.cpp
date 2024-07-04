@@ -13,6 +13,7 @@
 // Messaging headers
 #include "redshell/command.h"
 #include "redshell/imu.h"
+#include "redshell/encoder.h"
 
 static constexpr char serial_port_location[] = "/dev/ttyACM0";
 static constexpr double cmdvel_timeout_s = 0.5; // The amount of time to wait for a cmd_vel msg before stopping motors
@@ -26,6 +27,10 @@ RedshellInterface::RedshellInterface() : Node("redshell_interface")
 		"/cmd_vel", 10, 
 		std::bind(&RedshellInterface::cmd_vel_callback, this, std::placeholders::_1)
 	);
+
+	// Initialise publishers
+	_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", 10);
+	_encoder_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("encoders", 10);
 
 	// Open serial port connection to the motor interface board
 	this->_serial_port = open(serial_port_location, O_RDWR);
@@ -79,13 +84,60 @@ RedshellInterface::run()
 			{
 				PacketInfo incoming_packet;
 				deserialize(&incoming_packet, (uint8_t*)(_command_buffer));
-
-				uint16_t x, y, z;
-				msg_imu_decode(incoming_packet, &x, &y, &z);
-
-				RCLCPP_INFO(this->get_logger(), "From i/o: %u: (%d, %d, %d)", incoming_packet.id, x, y, z);
+				handle_message(incoming_packet);
 				_reading_msg = false;
 			}
+		}
+	}
+}
+
+void
+RedshellInterface::handle_message(const PacketInfo& msg)
+{
+	switch (msg.id)
+	{
+		case (REDSHELL_MSG_ID_IMU): {
+			sensor_msgs::msg::Imu imu_msg;
+			imu_msg.header.stamp = this->get_clock()->now();
+			imu_msg.header.frame_id = "imu";
+
+			uint16_t x, y, z;
+			msg_imu_decode(msg, &x, &y, &z);
+
+			// TODO: Convert imu data to ms2
+			// imu_msg.orientation = 
+			// imu_msg.orientation_covariance = 
+			// imu_msg.angular_velocity = 
+			// imu_msg.angular_velocity_covariance =
+			// imu_msg.linear_acceleration = 
+			// imu_msg.linear_acceleration_covariance =
+
+			_imu_pub->publish(imu_msg);
+			break;
+		}
+
+		case (REDSHELL_MSG_ID_ENCODER): {
+			geometry_msgs::msg::TwistWithCovarianceStamped encoder_msg;
+			encoder_msg.header.stamp = this->get_clock()->now();
+			encoder_msg.header.frame_id = "base_link";
+
+			uint32_t speed_motor_left_rpm, speed_motor_right_rpm;
+			msg_encoder_decode(msg, &speed_motor_left_rpm, &speed_motor_right_rpm);
+
+			// TODO: Convert encoder data to ms and rads
+			// encoder_msg.twist.twist.linear.x = 
+			// encoder_msg.twist.twist.linear.y = 
+			// encoder_msg.twist.twist.linear.z = 
+			// encoder_msg.twist.twist.angular.x = 
+			// encoder_msg.twist.twist.angular.y = 
+			// encoder_msg.twist.twist.angular.z = 
+			// encoder_msg.twist.twist.covariance =
+
+			_encoder_pub->publish(encoder_msg);
+			break;
+		}
+		default: {
+			RCLCPP_ERROR_THROTTLE(this->get_logger(), *(this->get_clock()), 1000, "Unsupported packet with msg %u", msg.id);
 		}
 	}
 }
