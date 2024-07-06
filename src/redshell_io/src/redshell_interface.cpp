@@ -101,16 +101,24 @@ RedshellInterface::handle_message(const PacketInfo& msg)
 			imu_msg.header.stamp = this->get_clock()->now();
 			imu_msg.header.frame_id = "imu";
 
-			uint16_t x, y, z;
-			msg_imu_decode(msg, &x, &y, &z);
+			int16_t x, y, z;
+			msg_imu_decode(msg, (uint16_t*)&x, (uint16_t*)&y, (uint16_t*)&z);
 
-			// TODO: Convert imu data to ms2
-			// imu_msg.orientation = 
-			// imu_msg.orientation_covariance = 
-			// imu_msg.angular_velocity = 
-			// imu_msg.angular_velocity_covariance =
-			// imu_msg.linear_acceleration = 
-			// imu_msg.linear_acceleration_covariance =
+			// ADXL345 Data Sheet Rev. G
+			static constexpr double adxl345_scaling_factor_mg_per_lsb = 31.2;
+			static constexpr double g_to_ms2 = 9.81;
+			static constexpr double imu_scaling = adxl345_scaling_factor_mg_per_lsb * 1e-3 * g_to_ms2;
+
+			imu_msg.orientation_covariance[0] = -1;
+			imu_msg.angular_velocity_covariance[0] = -1;
+			imu_msg.linear_acceleration.x = imu_scaling * x;
+			imu_msg.linear_acceleration.y = imu_scaling * y;
+			imu_msg.linear_acceleration.z = imu_scaling * z;
+
+			static constexpr double accel_std_dev = 0.5;
+			imu_msg.linear_acceleration_covariance[0] = std::sqrt(accel_std_dev);
+			imu_msg.linear_acceleration_covariance[4] = std::sqrt(accel_std_dev);
+			imu_msg.linear_acceleration_covariance[8] = std::sqrt(accel_std_dev);
 
 			_imu_pub->publish(imu_msg);
 			break;

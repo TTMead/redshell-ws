@@ -8,6 +8,8 @@ from launch.substitutions import EnvironmentVariable
 import pathlib
 import launch.actions
 from launch.actions import DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 def generate_launch_description():
     return LaunchDescription([
@@ -40,4 +42,11 @@ def generate_launch_description():
         #         os.path.join(get_package_share_directory('state_estimation'), 'launch/state_estimation.launch.py')
         #     )
         # )
+
+        # ==== Diagnostics ====
+        IncludeLaunchDescription(
+            XMLLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('foxglove_bridge'),'launch/foxglove_bridge_launch.xml')
+            )
+        )
     ])
