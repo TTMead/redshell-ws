@@ -121,7 +121,7 @@ RedshellInterface::handle_message(const PacketInfo& msg)
 			encoder_msg.header.stamp = this->get_clock()->now();
 			encoder_msg.header.frame_id = "base_link";
 
-			uint32_t speed_motor_left_rpm, speed_motor_right_rpm;
+			int32_t speed_motor_left_rpm, speed_motor_right_rpm;
 			msg_encoder_decode(msg, &speed_motor_left_rpm, &speed_motor_right_rpm);
 
 			// TODO: Convert encoder data to ms and rads
@@ -196,20 +196,14 @@ RedshellInterface::write_motor_command(float throttle, float yaw_rate){
 	const float left_speed = (throttle - yaw_rate)/2;    
 	const float right_speed = (throttle + yaw_rate)/2;
 
-	// Motor speed commands are within the range of [00 to 99]
-	int32_t left_cmd = std::ceil(abs(left_speed)*(99.0));
-	int32_t right_cmd = std::ceil(abs(right_speed)*(99.0));
-
-	// Scale the motor speeds out of the deadzone
-	left_cmd = scale_motor_command(left_cmd);
-	right_cmd = scale_motor_command(right_cmd);
+	// Motor speed commands are within the range of [-100 to 100]
+	int32_t left_cmd = std::round(left_speed*100.0);
+	int32_t right_cmd = std::round(right_speed*100.0);
 
 	uint8_t motor_command_msg[REDSHELL_MESSAGE_SIZE];
 	serialize(msg_command_encode(left_cmd, right_cmd), motor_command_msg);
 
 	write(this->_serial_port, motor_command_msg, sizeof(motor_command_msg));
-
-	RCLCPP_INFO(this->get_logger(), "Sending motor command (%u, %u)", left_cmd, right_cmd);
 }
 
 void
