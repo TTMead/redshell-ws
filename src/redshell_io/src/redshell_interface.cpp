@@ -30,10 +30,10 @@ RedshellInterface::RedshellInterface() : Node("redshell_interface")
 
 	// Initialise publishers
 	_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", 10);
-	_encoder_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("encoders", 10);
+	_encoder_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("wheel_encoders", 10);
 
 	this->declare_parameter("port", "/dev/ttyUSB0");
-	std::string serial_port_location = "/dev/ttyUSB1";this->get_parameter("port").as_string();
+	std::string serial_port_location = this->get_parameter("port").as_string();
 
 	// Open serial port connection to the motor interface board
 	this->_serial_port = open(serial_port_location.c_str(), O_RDWR);

@@ -9,6 +9,7 @@ import pathlib
 import launch.actions
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 def generate_launch_description():
@@ -37,11 +38,12 @@ def generate_launch_description():
         ),
 
         # ==== State Estimation ====
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(
-        #         os.path.join(get_package_share_directory('state_estimation'), 'launch/state_estimation.launch.py')
-        #     )
-        # )
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(get_package_share_directory('state_estimation'), 'launch/state_estimation.launch.py')
+            ), 
+            launch_arguments={'sitl': 'False'}.items()
+        ),
 
         # ==== Diagnostics ====
         IncludeLaunchDescription(
