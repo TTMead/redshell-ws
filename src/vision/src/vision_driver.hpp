@@ -3,6 +3,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <string>
+#include <thread>
 
 class VisionDriver : public rclcpp::Node
 {
@@ -25,7 +26,7 @@ class VisionDriver : public rclcpp::Node
 		 * Runs the core vision aquisition and processing loop. Is not
 		 * used when running in SITL
 		*/
-		int run();
+		void run();
 
 		/**
 		 * Is called from /front_camera messages received while in SITL.
@@ -33,5 +34,6 @@ class VisionDriver : public rclcpp::Node
 		void front_camera_callback(const sensor_msgs::msg::Image::SharedPtr msg);
 
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _front_camera_sub;
-
+		
+		std::thread _run_thread;
 };

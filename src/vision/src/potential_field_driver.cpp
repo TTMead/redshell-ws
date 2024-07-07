@@ -15,8 +15,10 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
     this->declare_parameter("x_pixel_to_bearing_b", -44.4039);
     this->declare_parameter("frame_id", "base_link");
     this->declare_parameter("field_topic", "/front_field");
+    this->declare_parameter("camera_pub_topic", "/front_cam");
 
     _potential_field_publisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>(this->get_parameter("field_topic").as_string(), 10);
+    _physical_camera_publisher = this->create_publisher<sensor_msgs::msg::Image>(this->get_parameter("camera_pub_topic").as_string(), 10);
 }
 
 void
@@ -42,7 +44,6 @@ PotentialFieldDriver::initialise_occupancy_grid_msg()
     }
 }
 
-
 void
 PotentialFieldDriver::clear_occupancy_grid_msg()
 {
@@ -53,11 +54,15 @@ PotentialFieldDriver::clear_occupancy_grid_msg()
 void
 PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
 {
+    std_msgs::msg::Header header;
+    header.frame_id = "front_cam";
+    header.stamp = rclcpp::Node::now();
+
 	// Convert the frame to hsv
 	cv::cvtColor(image_frame, image_frame, cv::COLOR_BGR2HSV);
 
 	// Threshold the frame by colour
-	cv::Mat yellow_frame, blue_frame;
+	cv::Mat yellow_frame, blue_frame, purple_frame, red_frame;
 	cv::inRange(image_frame, 
                 cv::Scalar(YELLOW_THRESHOLD_H_LOW, YELLOW_THRESHOLD_S_LOW, YELLOW_THRESHOLD_V_LOW),
                 cv::Scalar(YELLOW_THRESHOLD_H_HIGH, YELLOW_THRESHOLD_S_HIGH, YELLOW_THRESHOLD_V_HIGH), 
@@ -66,16 +71,28 @@ PotentialFieldDriver::analyse_frame(cv::Mat image_frame)
                 cv::Scalar(BLUE_THRESHOLD_H_LOW, BLUE_THRESHOLD_S_LOW, BLUE_THRESHOLD_V_LOW),
                 cv::Scalar(BLUE_THRESHOLD_H_HIGH, BLUE_THRESHOLD_S_HIGH, BLUE_THRESHOLD_V_HIGH), 
                 blue_frame);
+    cv::inRange(image_frame, 
+                cv::Scalar(PURPLE_THRESHOLD_H_LOW, PURPLE_THRESHOLD_S_LOW, PURPLE_THRESHOLD_V_LOW),
+                cv::Scalar(PURPLE_THRESHOLD_H_HIGH, PURPLE_THRESHOLD_S_HIGH, PURPLE_THRESHOLD_V_HIGH), 
+                purple_frame);
+    cv::inRange(image_frame, 
+                cv::Scalar(RED_THRESHOLD_H_LOW, RED_THRESHOLD_S_LOW, RED_THRESHOLD_V_LOW),
+                cv::Scalar(RED_THRESHOLD_H_HIGH, RED_THRESHOLD_S_HIGH, RED_THRESHOLD_V_HIGH), 
+                red_frame);
 
     // Combine the image frames and apply post processing
-    cv::Mat track_frame = yellow_frame + blue_frame;
+    cv::Mat track_frame = yellow_frame + blue_frame + purple_frame + red_frame;
 	cv::medianBlur(track_frame, track_frame, 7);
 
-    // if (this->get_parameter("is_sitl").as_bool())
-    // {
-    //     cv::imshow(this->get_parameter("camera_topic").as_string(), track_frame);
-    //     cv::waitKey(1);
-    // }
+    cv_bridge::CvImage img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO8, track_frame);
+    img_bridge.toImageMsg(_image);
+
+
+    if (false) // this->get_parameter("is_sitl").as_bool()
+    {
+        cv::imshow(this->get_parameter("camera_topic").as_string(), track_frame);
+        cv::waitKey(1);
+    }
 
     clear_occupancy_grid_msg();
     add_bin_image_to_occupancy(track_frame);
@@ -165,8 +182,8 @@ PotentialFieldDriver::publish()
     _occupancy_grid.info.map_load_time = rclcpp::Node::now();
     _occupancy_grid.header.stamp = rclcpp::Node::now();
     _occupancy_grid.header.frame_id = this->get_parameter("frame_id").as_string();
-
     _potential_field_publisher->publish(_occupancy_grid);
+    _physical_camera_publisher->publish(_image);
 }
 
 

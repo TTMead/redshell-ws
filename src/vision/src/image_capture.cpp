@@ -7,10 +7,9 @@ ImageCapture::ImageCapture() : Node("image_capture")
 	if (this->get_parameter("is_sitl").as_bool()) {
 		// In SITL receive image feed from the ROS topic
 		_front_camera_sub = this->create_subscription<sensor_msgs::msg::Image>(
-			"/front_camera", 10, 
+			"/front_camera", 10,
 			std::bind(&ImageCapture::front_camera_capture, this, std::placeholders::_1)
 		);
-
 	} else {
 		// If not SITL receive image feed from webcam
 		_video_capture = cv::VideoCapture(VIDEO_CAMERA_ID, cv::CAP_V4L2);
@@ -45,7 +44,7 @@ ImageCapture::physical_camera_capture()
 
 	if (image_frame.empty()) {
 		RCLCPP_ERROR(this->get_logger(), "Could not extract image frame from video capture");
-		rclcpp::shutdown();
+		// rclcpp::shutdown();
 	}
 
     save_camera_image(image_frame);
@@ -56,7 +55,7 @@ void
 ImageCapture::save_camera_image(cv::Mat image)
 {
     cv::imwrite("image_capture.jpg", image);
-    rclcpp::shutdown();
+    // rclcpp::shutdown();
 }
 
 
