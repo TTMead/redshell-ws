@@ -8,16 +8,21 @@ from launch.actions import IncludeLaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     return LaunchDescription([
+        DeclareLaunchArgument(
+            "sitl", default_value='True'
+        ),
+
         # ==== EKF Node ====
         Node(
             package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
-            parameters=[{"use_sim_time": True}, os.path.join(get_package_share_directory("state_estimation"), 'config', 'state_estimation_params.yaml')]
+            parameters=[{"use_sim_time": LaunchConfiguration('sitl')}, os.path.join(get_package_share_directory("state_estimation"), 'config', 'state_estimation_params.yaml')]
         ),
 
         # ==== EKF Supervisor ====
@@ -26,7 +31,7 @@ def generate_launch_description():
             executable='ekf_supervisor',
             name='ekf_supervisor',
             output='screen',
-            parameters=[{"use_sim_time": True}]
+            parameters=[{"use_sim_time": LaunchConfiguration('sitl')}]
         ),
         
         # ==== Static Broadcasters ====
