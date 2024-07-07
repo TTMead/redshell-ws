@@ -15,7 +15,7 @@
 #include "redshell/imu.h"
 #include "redshell/encoder.h"
 
-static constexpr char serial_port_location[] = "/dev/ttyACM0";
+static constexpr char serial_port_location[] = "/dev/ttyUSB0";
 static constexpr double cmdvel_timeout_s = 0.5; // The amount of time to wait for a cmd_vel msg before stopping motors
 static constexpr double cmdvel_min_period_s = 0.1; // The amount of time to ignore cmd_vel msg after one has been received
 static constexpr double motor_deadzone = 9.0; // The threshold of percentage PWM that causes the motor to start moving
@@ -32,10 +32,13 @@ RedshellInterface::RedshellInterface() : Node("redshell_interface")
 	_imu_pub = this->create_publisher<sensor_msgs::msg::Imu>("imu", 10);
 	_encoder_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("encoders", 10);
 
+	this->declare_parameter("port", "/dev/ttyUSB0");
+	std::string serial_port_location = "/dev/ttyUSB1";this->get_parameter("port").as_string();
+
 	// Open serial port connection to the motor interface board
-	this->_serial_port = open(serial_port_location, O_RDWR);
+	this->_serial_port = open(serial_port_location.c_str(), O_RDWR);
 	if (this->_serial_port < 0) {
-		RCLCPP_ERROR(this->get_logger(), "Error %i while attempting to open serial connection '%s': \"%s\"\n", errno, serial_port_location, strerror(errno));
+		RCLCPP_ERROR(this->get_logger(), "Error %i while attempting to open serial connection '%s': \"%s\"\n", errno, serial_port_location.c_str(), strerror(errno));
 	}
 	configure_serial_port();
 
@@ -132,14 +135,31 @@ RedshellInterface::handle_message(const PacketInfo& msg)
 			int32_t speed_motor_left_rpm, speed_motor_right_rpm;
 			msg_encoder_decode(msg, &speed_motor_left_rpm, &speed_motor_right_rpm);
 
-			// TODO: Convert encoder data to ms and rads
-			// encoder_msg.twist.twist.linear.x = 
-			// encoder_msg.twist.twist.linear.y = 
-			// encoder_msg.twist.twist.linear.z = 
-			// encoder_msg.twist.twist.angular.x = 
-			// encoder_msg.twist.twist.angular.y = 
-			// encoder_msg.twist.twist.angular.z = 
-			// encoder_msg.twist.twist.covariance =
+			// RCLCPP_INFO(this->get_logger(), "ENC (%d, %d)", speed_motor_left_rpm, speed_motor_right_rpm);
+
+			static constexpr double wheel_radius_m = 0.05;
+			static constexpr double rpm_to_ms = (1.0 / 60.0) * 2.0 * M_PI * wheel_radius_m;
+
+			const double left_vel_ms = speed_motor_left_rpm * rpm_to_ms;
+			const double right_vel_ms = speed_motor_right_rpm * rpm_to_ms;
+
+			const double forward_vel_ms = (left_vel_ms + right_vel_ms) / 2.0;
+
+			static constexpr double wheel_base_m = 0.23;
+			const double angular_vel_ms = (right_vel_ms - left_vel_ms) / wheel_base_m;
+
+			encoder_msg.twist.twist.linear.x = forward_vel_ms;
+			encoder_msg.twist.twist.linear.y = 0.0;
+			encoder_msg.twist.twist.linear.z = 0.0;
+			encoder_msg.twist.twist.angular.x = 0.0;
+			encoder_msg.twist.twist.angular.y = 0.0;
+			encoder_msg.twist.twist.angular.z = angular_vel_ms;
+
+			static constexpr double forward_vel_std_dev = 0.3;
+			encoder_msg.twist.covariance[0] = std::sqrt(forward_vel_std_dev);
+
+			static constexpr double angular_vel_std_dev = 0.2;
+			encoder_msg.twist.covariance[35] = std::sqrt(angular_vel_std_dev);
 
 			_encoder_pub->publish(encoder_msg);
 			break;

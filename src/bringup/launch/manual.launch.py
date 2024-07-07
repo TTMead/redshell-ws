@@ -28,7 +28,7 @@ def generate_launch_description():
             # parameters=[{"enable_button": 5}, {"axis_linear.x": 4}, {"axis_angular.yaw": 3}],
 
             # 2 stick configuration
-            parameters=[{"use_sim_time": False}, {"enable_button": 10}, {"axis_linear.x": 0}, {"axis_angular.yaw": 3}],
+            parameters=[{"use_sim_time": False}, {"enable_button": 10}, {"axis_linear.x": 3}, {"axis_angular.yaw": 0}],
         ),
         launch_ros.actions.Node(
             package='joy',
