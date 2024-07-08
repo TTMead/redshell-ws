@@ -9,7 +9,7 @@ TrackErrorDriver::TrackErrorDriver() : VisionDriver("track_error_driver")
 void
 TrackErrorDriver::analyse_frame(cv::Mat image_frame)
 {
-	cv::imshow("Image", image_frame);
+	// cv::imshow("Image", image_frame);
 
 	// Convert the frame to hsv
 	cv::cvtColor(image_frame, image_frame, cv::COLOR_BGR2HSV);
@@ -19,9 +19,9 @@ TrackErrorDriver::analyse_frame(cv::Mat image_frame)
 	cv::inRange(image_frame, cv::Scalar(25, 30, 0), cv::Scalar(35, 255, 255), yellow_frame);
 	cv::inRange(image_frame, cv::Scalar(90, 50, 190), cv::Scalar(130, 250, 250), blue_frame);
 
-	cv::imshow("Yellow Threshold", yellow_frame);
-	cv::imshow("Blue Threshold", blue_frame);
-	cv::waitKey(1);
+	// cv::imshow("Yellow Threshold", yellow_frame);
+	// cv::imshow("Blue Threshold", blue_frame);
+	// cv::waitKey(1);
 
 	// Apply median blur to each frame
 	cv::medianBlur(yellow_frame, yellow_frame, 7);
