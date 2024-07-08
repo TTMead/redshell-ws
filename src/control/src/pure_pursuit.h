@@ -55,7 +55,7 @@ private:
     static constexpr double subtract_angles(const double target_rad, const double source_rad)
     {
         double result_rad = target_rad - source_rad;
-        result_rad = std::fmod((result_rad + M_PI_2), M_PI) - M_PI;
+        result_rad = std::fmod((result_rad + M_PI_2), M_PI) - M_PI_2;
         return result_rad;
     }
 
