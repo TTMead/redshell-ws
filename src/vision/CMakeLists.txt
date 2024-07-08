@@ -5,6 +5,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+
+list(APPEND CMAKE_PREFIX_PATH "libtorch")
+
 # Resolve Dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -13,9 +16,9 @@ find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(Torch REQUIRED)
 
-set(dependencies rclcpp OpenCV sensor_msgs cv_bridge std_msgs nav_msgs)
-
+set(dependencies rclcpp OpenCV sensor_msgs cv_bridge std_msgs nav_msgs Torch)
 
 # Install executables
 add_executable(track_error_driver src/track_error_driver.cpp src/vision_driver.cpp)
@@ -33,11 +36,17 @@ ament_target_dependencies(image_capture ${dependencies})
 install(TARGETS image_capture
         DESTINATION lib/${PROJECT_NAME})
 
+add_executable(arrow_classification src/classification/arrow_classification.cpp)
+ament_target_dependencies(arrow_classification ${dependencies})
+# target_link_libraries(arrow_classification ${TORCH_LIBRARIES})
+install(TARGETS arrow_classification
+        DESTINATION lib/${PROJECT_NAME})
 
 # Resolve and install include filepaths
 include_directories(
   ${OpenCV_INCLUDE_DIRS}
   src
+  src/classification
 )
 
 

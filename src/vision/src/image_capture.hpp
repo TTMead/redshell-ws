@@ -17,7 +17,7 @@ class ImageCapture : public rclcpp::Node
 		void physical_camera_capture();
 		void save_camera_image(cv::Mat image);
 
-        const int VIDEO_CAMERA_ID = 0;
+        const int VIDEO_CAMERA_ID = 5;
 		cv::VideoCapture _video_capture;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _front_camera_sub;
 };

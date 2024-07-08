@@ -4,7 +4,7 @@
 VisionDriver::VisionDriver(const std::string &node_name) : Node(node_name)
 {
 	this->declare_parameter("camera_topic", "/front_camera");
-	this->declare_parameter("camera_index", 0);
+	this->declare_parameter("camera_index", 4);
     this->declare_parameter("is_sitl", false);
 
 	if (this->get_parameter("is_sitl").as_bool()) {
@@ -21,16 +21,7 @@ VisionDriver::VisionDriver(const std::string &node_name) : Node(node_name)
 		}
 
 		RCLCPP_INFO(this->get_logger(), "Backend: %s", std::string(_video_capture.getBackendName()).c_str());
-
-		while(true)
-		{
-			int error = run();
-
-			if (error)
-			{
-				RCLCPP_INFO(this->get_logger(), "Exiting");
-			}
-		}
+		_run_thread = std::thread(&VisionDriver::run, this);
 	}
 }
 
@@ -61,19 +52,22 @@ VisionDriver::get_centroid(cv::Mat &mask)
 }
 
 
-int
+void
 VisionDriver::run()
 {
-    cv::Mat image_frame;
-	_video_capture >> image_frame;
+	bool running = true;
+	while (running)
+	{
+		cv::Mat image_frame;
+		_video_capture >> image_frame;
 
-	if (image_frame.empty()) {
-		RCLCPP_ERROR(this->get_logger(), "Could not extract image frame from video capture");
-		rclcpp::shutdown();
-		return 1;
+		if (image_frame.empty()) {
+			RCLCPP_ERROR(this->get_logger(), "Could not extract image frame from video capture. Exiting");
+			rclcpp::shutdown();
+			running = false;
+		}
+
+		analyse_frame(image_frame);
 	}
-
-	analyse_frame(image_frame);
-	return 0;
 }
 
