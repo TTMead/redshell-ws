@@ -280,8 +280,8 @@ RedshellInterface::configure_serial_port()
 	tty.c_cc[VMIN] = 0;
 
 	// Baudrate configuration
-	cfsetispeed(&tty, B19200);
-	cfsetospeed(&tty, B19200);
+	cfsetispeed(&tty, B115200);
+	cfsetospeed(&tty, B115200);
 
 	// Save tty settings
 	if (tcsetattr(this->_serial_port, TCSANOW, &tty) != 0) {
