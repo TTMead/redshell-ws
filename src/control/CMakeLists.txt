@@ -10,8 +10,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
-set(DEPENDENCIES rclcpp geometry_msgs nav_msgs tf2_ros)
+set(DEPENDENCIES rclcpp geometry_msgs std_msgs nav_msgs tf2_ros)
 
 # Create Pure Pursuit Executable
 add_executable(pure_pursuit src/pure_pursuit.cpp src/pure_pursuit_node.cpp)
@@ -19,6 +20,13 @@ ament_target_dependencies(pure_pursuit ${DEPENDENCIES})
 target_include_directories(pure_pursuit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(pure_pursuit PUBLIC cxx_std_17)
 install(TARGETS pure_pursuit DESTINATION lib/${PROJECT_NAME})
+
+# Create VS Control Executable
+add_executable(vs_control src/vs_control/vs_control.cpp)
+ament_target_dependencies(vs_control ${DEPENDENCIES})
+target_include_directories(vs_control PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/vs_control)
+install(TARGETS vs_control
+        DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
