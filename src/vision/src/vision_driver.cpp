@@ -4,7 +4,7 @@
 VisionDriver::VisionDriver(const std::string &node_name) : Node(node_name)
 {
 	this->declare_parameter("camera_topic", "/front_camera");
-	this->declare_parameter("camera_index", 4);
+	this->declare_parameter("camera_index", 0);
     this->declare_parameter("is_sitl", false);
 
 	if (this->get_parameter("is_sitl").as_bool()) {

@@ -50,9 +50,10 @@ def generate_launch_description():
             executable='potential_field_driver',
             name='front_camera_driver',
             parameters=[
-                {"is_sitl": False}, 
-                {"camera_topic": "/front_camera"}, 
+                {"is_sitl": False},
+                {"camera_index": 0},
                 {"field_topic": "/front_field"}, 
+                {"camera_pub_topic": "/front_cam"},
                 {"frame_id": "front_cam"}
             ]
         ),
