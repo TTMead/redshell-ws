@@ -23,13 +23,12 @@ Aggregator::get_occupancy_grid() const
 void
 Aggregator::filter_costmap()
 {
-	// fade(_aggregated_occupancy_grid, -100);
+	fade(_aggregated_occupancy_grid, -10);
 }
 
 void
 Aggregator::potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
-    fade(_aggregated_occupancy_grid, -100);
 	combine_costmaps(_aggregated_occupancy_grid, *msg);
 }
 
@@ -71,11 +70,11 @@ Aggregator::combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs:
     for (int64_t tile_index = 0; tile_index < (new_grid.info.width * new_grid.info.height); tile_index++)
     {
         // If this tile has a small value, skip it
-        static constexpr int8_t copy_threshold = 5;
-        if (std::abs(new_grid.data[tile_index]) < copy_threshold)
-        {
-            continue;
-        }
+        // static constexpr int8_t copy_threshold = 5;
+        // if (std::abs(new_grid.data[tile_index]) < copy_threshold)
+        // {
+        //     continue;
+        // }
 
         // Get position of tile
         const geometry_msgs::msg::PointStamped tile_location = get_point_from_index(new_grid, tile_index);

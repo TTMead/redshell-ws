@@ -59,7 +59,7 @@ private:
      * 
      * @return The Point location of the tile in the grid's frame_id
      */
-    static inline geometry_msgs::msg::PointStamped get_point_from_index(const nav_msgs::msg::OccupancyGrid& grid, const int index)
+    static inline geometry_msgs::msg::PointStamped get_point_from_index(const nav_msgs::msg::OccupancyGrid& grid, const int64_t index)
     {
         const uint32_t col = index % grid.info.width;
         const uint32_t row = std::floor(index / grid.info.width);
@@ -99,7 +99,7 @@ private:
         }
 
         const uint64_t index = col + (row * grid.info.width);
-        grid.data[index] = value;
+        grid.data[index] += value;
     }
 
     /**

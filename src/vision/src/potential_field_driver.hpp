@@ -46,7 +46,7 @@ class PotentialFieldDriver : public VisionDriver
         static constexpr uint8_t RED_THRESHOLD_V_HIGH = 255;
 
         static constexpr uint32_t COSTMAP_WIDTH = 160;
-        static constexpr uint32_t COSTMAP_HEIGHT = 100;
+        static constexpr uint32_t COSTMAP_HEIGHT = 160;
         static constexpr uint64_t COSTMAP_LENGTH = COSTMAP_WIDTH * COSTMAP_HEIGHT;
         static constexpr float COSTMAP_RESOLUTION = 0.05;   // [m/cell]
 

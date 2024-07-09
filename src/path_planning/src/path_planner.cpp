@@ -50,6 +50,7 @@ void PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::Sh
     if (double_costmap)
     {
         add_double_wave(*double_costmap, -yaw);
+        add_double_forward_wave(*double_costmap, yaw);
 
         static constexpr int8_t mean_factor = 12;
         for (int i = 0; i < mean_factor; i++)
@@ -100,7 +101,7 @@ std::optional<std::vector<std::vector<double>>> PathPlanner::extract_double_map(
 
             // Copy the value of the costmap into the double map
             const int64_t cell_index = (robot_col + x) + ((robot_row + y) * costmap.info.width);
-            double_map[x+wave_dist][y+wave_dist] = costmap.data[cell_index];
+            double_map[x+wave_dist][y+wave_dist] = costmap.data[cell_index] * 5;
         }
     }
 
@@ -122,6 +123,29 @@ void PathPlanner::add_double_wave(std::vector<std::vector<double>>& costmap, dou
 
             // Add wavefront value to the cell
             costmap[x+wave_dist][y+wave_dist] += wave_dist + value;
+        }
+    }
+}
+
+void PathPlanner::add_double_forward_wave(std::vector<std::vector<double>>& costmap, double bearing_rad)
+{
+    // Define wavefront distance
+    static constexpr int8_t wave_dist = 40;
+
+    // Iterate through cells around the robot within wavefront distance
+    for (int8_t x = -wave_dist; x < wave_dist; x++)
+    {
+        for (int8_t y = -wave_dist; y < wave_dist; y++)
+        {
+            const double gradient = std::tan(bearing_rad);
+            const double intercept = 0.0;
+
+            // Calculate perpendicular distance
+            const double distance_cells = abs((gradient*x - y + intercept)) / std::sqrt((gradient*gradient) + 1);
+            const double distance_m = distance_cells * 4;
+
+            // Add perp dist to the cell
+            costmap[x+wave_dist][y+wave_dist] += distance_m;
         }
     }
 }

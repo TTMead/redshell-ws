@@ -32,6 +32,7 @@ public:
 
     void mean_filter(std::vector<std::vector<double>>& double_map);
 
+    void add_double_forward_wave(std::vector<std::vector<double>>& costmap, double bearing_rad);
 private:
     /**
      * @brief Clears the contents of the optional-type data and returns its value
