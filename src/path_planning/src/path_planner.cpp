@@ -100,6 +100,8 @@ void PathPlanner::add_wave(nav_msgs::msg::OccupancyGrid& costmap, const geometry
         }
     }
 
+    //
+
     // Store the modified costmap (distance transform)
     _distance_transform = costmap;
 }
