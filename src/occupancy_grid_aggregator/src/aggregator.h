@@ -61,12 +61,12 @@ private:
      */
     static inline geometry_msgs::msg::PointStamped get_point_from_index(const nav_msgs::msg::OccupancyGrid& grid, const int64_t index)
     {
-        const uint32_t col = index % grid.info.width;
-        const uint32_t row = std::floor(index / grid.info.width);
+        const int32_t col = index % grid.info.width;
+        const int32_t row = std::floor(index / grid.info.width);
 
         geometry_msgs::msg::PointStamped tile_location{};
-        tile_location.point.x = grid.info.origin.position.x + (static_cast<float>(row) * grid.info.resolution);
-        tile_location.point.y = grid.info.origin.position.y + (static_cast<float>(col - (grid.info.width/2)) * grid.info.resolution);
+        tile_location.point.x = grid.info.origin.position.x + (static_cast<double>(row * grid.info.resolution));
+        tile_location.point.y = grid.info.origin.position.y + (static_cast<double>(col - static_cast<int32_t>(grid.info.width/2)) * grid.info.resolution);
         tile_location.header.frame_id = grid.header.frame_id;
 
         return tile_location;
@@ -80,21 +80,27 @@ private:
      * @param point The point to map to a tile.
      * @param value The value to fuse into the grid at the location of point.
      */
-    static inline void add_point_to_grid(nav_msgs::msg::OccupancyGrid& grid, const geometry_msgs::msg::Point& point, const int8_t value)
+    inline void add_point_to_grid(nav_msgs::msg::OccupancyGrid& grid, const geometry_msgs::msg::Point& point, const int8_t value)
     {
-        const double x_rel = point.x - grid.info.origin.position.x;
-        const double y_rel = point.y - grid.info.origin.position.y;
+        const double x_rel = point.x;// - grid.info.origin.position.x;
+        const double y_rel = point.y;// - grid.info.origin.position.y;
 
-        if ((x_rel < 0) || (y_rel < 0))
+        // if ((x_rel < 0) || (y_rel < 0))
+        // {
+        //     return;
+        // }
+
+        const int32_t col = std::floor(x_rel / static_cast<double>(grid.info.resolution)) + (static_cast<double>(grid.info.width)/2.0);
+        const int32_t row = std::floor(y_rel / static_cast<double>(grid.info.resolution)) + (static_cast<double>(grid.info.height)/2.0);
+
+
+        if ((col >= static_cast<int32_t>(grid.info.width)) || (row >= static_cast<int32_t>(grid.info.height)))
         {
-            return;
+            RCLCPP_INFO_THROTTLE(_node->get_logger(), *(_node->get_clock()), 1000, "yeeeee");
         }
-
-        const uint32_t col = std::floor(x_rel / grid.info.resolution);
-        const uint32_t row = std::floor(y_rel / grid.info.resolution);
-
-        if ((col >= grid.info.width) || (row >= grid.info.height))
+        if ((col < 0) || (col >= static_cast<int32_t>(grid.info.width)) || (row < 0) || (row >= static_cast<int32_t>(grid.info.height)))
         {
+            RCLCPP_INFO_THROTTLE(_node->get_logger(), *(_node->get_clock()), 1000, "yooo");
             return;
         }
 

@@ -23,7 +23,7 @@ Aggregator::get_occupancy_grid() const
 void
 Aggregator::filter_costmap()
 {
-	fade(_aggregated_occupancy_grid, -10);
+	fade(_aggregated_occupancy_grid, -5);
 }
 
 void
@@ -67,7 +67,7 @@ Aggregator::combine_costmaps(nav_msgs::msg::OccupancyGrid& grid, const nav_msgs:
     }
 
     // Iterate through every tile in new_grid
-    for (int64_t tile_index = 0; tile_index < (new_grid.info.width * new_grid.info.height); tile_index++)
+    for (int64_t tile_index = 0; tile_index < ((2 * new_grid.info.width * new_grid.info.height) - 1); tile_index++)
     {
         // If this tile has a small value, skip it
         // static constexpr int8_t copy_threshold = 5;
