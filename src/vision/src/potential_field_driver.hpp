@@ -1,6 +1,10 @@
 #include "vision_driver.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include <torch/torch.h>
+#include <torch/script.h>
+#include <iostream>
+#include <memory>
 
 class PotentialFieldDriver : public VisionDriver
 {
@@ -10,6 +14,7 @@ class PotentialFieldDriver : public VisionDriver
     private:
         void analyse_frame(cv::Mat image_frame) override;
         void initialise_occupancy_grid_msg();
+        void initialise_arrownet();
         void clear_occupancy_grid_msg();
         void pixels_to_m(double x_px, double y_px, double &x_m, double &y_m); // Converts a point in pixels to a point in meters using a calibrated empirical model
         void publish();
@@ -55,4 +60,6 @@ class PotentialFieldDriver : public VisionDriver
 
         rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr _potential_field_publisher;
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr _physical_camera_publisher;
+
+        torch::jit::script::Module _module;
 };
