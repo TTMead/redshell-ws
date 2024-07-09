@@ -23,12 +23,13 @@ Aggregator::get_occupancy_grid() const
 void
 Aggregator::filter_costmap()
 {
-	fade(_aggregated_occupancy_grid, -1);
+	// fade(_aggregated_occupancy_grid, -100);
 }
 
 void
 Aggregator::potential_field_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
+    fade(_aggregated_occupancy_grid, -100);
 	combine_costmaps(_aggregated_occupancy_grid, *msg);
 }
 

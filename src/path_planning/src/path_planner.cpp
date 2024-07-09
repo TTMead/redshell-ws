@@ -45,11 +45,79 @@ void PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::Sh
     // Copy the received occupancy grid message
     nav_msgs::msg::OccupancyGrid grid = *msg;
 
+    // Extract double map
+    std::optional<std::vector<std::vector<double>>> double_costmap = extract_double_map(grid, robot_pose);
+    if (double_costmap)
+    {
+        add_double_wave(*double_costmap, -yaw);
+        _path = generate_double_path(grid, *double_costmap, map_to_robot);
+    }
+
     // Modify the grid with wavefront algorithm using robot's pose and yaw
-    add_wave(grid, robot_pose, -yaw);
+    // add_wave(grid, robot_pose, -yaw);
 
     // Generate a path based on the modified grid and robot's transform
-    _path = generate_path(grid, map_to_robot);
+    // _path = generate_path(grid, map_to_robot);
+}
+
+
+std::optional<std::vector<std::vector<double>>> PathPlanner::extract_double_map(nav_msgs::msg::OccupancyGrid& costmap, const geometry_msgs::msg::Pose& robot_pose)
+{
+    // Convert robot's position to grid coordinates
+    const double costmap_resolution_m_per_cell = costmap.info.resolution;
+    int32_t robot_col = std::round((robot_pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
+    int32_t robot_row = std::round((robot_pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
+
+    // Check if robot is within the valid range of the costmap
+    if ((robot_row <= 0) || (robot_row >= static_cast<int32_t>(costmap.info.height))
+     || (robot_col <= 0) || (robot_col >= static_cast<int32_t>(costmap.info.width)))
+    {
+        // Log error if robot is outside the valid range
+        RCLCPP_ERROR_THROTTLE(_node->get_logger(), *(_node->get_clock()), 1000, "Robot is outside of aggregate costmap");
+        return {};
+    }
+
+    static constexpr int8_t wave_dist = 40;
+    std::vector<std::vector<double>> double_map(2*wave_dist);
+
+    for (int8_t x = -wave_dist; x < wave_dist; x++)
+    {
+        double_map[x + wave_dist] = std::vector<double>(2*wave_dist);
+        for (int8_t y = -wave_dist; y < wave_dist; y++)
+        {
+            // Skip cells that are out of bounds
+            if ((robot_col + x <= 0) || (robot_col + x >= static_cast<int32_t>(costmap.info.width)) || 
+                (robot_row + y <= 0) || (robot_row + y >= static_cast<int32_t>(costmap.info.height)))
+            {
+                continue;
+            }
+
+            // Copy the value of the costmap into the double map
+            const int64_t cell_index = (robot_col + x) + ((robot_row + y) * costmap.info.width);
+            double_map[x+wave_dist][y+wave_dist] = costmap.data[cell_index];
+        }
+    }
+
+    return double_map;
+}
+
+void PathPlanner::add_double_wave(std::vector<std::vector<double>>& costmap, double bearing_rad)
+{
+    // Define wavefront distance
+    static constexpr int8_t wave_dist = 40;
+
+    // Iterate through cells around the robot within wavefront distance
+    for (int8_t x = -wave_dist; x < wave_dist; x++)
+    {
+        for (int8_t y = -wave_dist; y < wave_dist; y++)
+        {
+            // Calculate wavefront value for the cell
+            const double value = -std::round((std::cos(bearing_rad) * x) + (-std::sin(bearing_rad) * y));
+
+            // Add wavefront value to the cell
+            costmap[x+wave_dist][y+wave_dist] += wave_dist + value;
+        }
+    }
 }
 
 // Function to modify the occupancy grid using wavefront algorithm
@@ -206,3 +274,107 @@ nav_msgs::msg::Path PathPlanner::generate_path(const nav_msgs::msg::OccupancyGri
     path.header.stamp = _node->get_clock()->now();
     return path;
 }
+
+nav_msgs::msg::Path PathPlanner::generate_double_path(const nav_msgs::msg::OccupancyGrid& costmap, const std::vector<std::vector<double>>& double_map, const geometry_msgs::msg::TransformStamped& map_to_robot)
+{
+    static constexpr char path_frame_id[] = "map";
+
+    // Initialize path message
+    nav_msgs::msg::Path path;
+    path.header.frame_id = path_frame_id;
+
+    // Set initial position for path generation
+    geometry_msgs::msg::PoseStamped next_path_location;
+    next_path_location.header.frame_id = path_frame_id;
+    next_path_location.header.stamp = _node->get_clock()->now();
+    next_path_location.pose.position.x = map_to_robot.transform.translation.x;
+    next_path_location.pose.position.y = map_to_robot.transform.translation.y;
+    next_path_location.pose.position.z = map_to_robot.transform.translation.z;
+    next_path_location.pose.orientation = map_to_robot.transform.rotation;
+
+    // Convert robot's position to grid coordinates
+    const double costmap_resolution_m_per_cell = costmap.info.resolution;
+    int32_t robot_row = std::round((next_path_location.pose.position.y / costmap_resolution_m_per_cell) + (costmap.info.height/2.0));
+    int32_t robot_col = std::round((next_path_location.pose.position.x / costmap_resolution_m_per_cell) + (costmap.info.width/2.0));
+
+    // Check if robot is within the valid range of the costmap
+    if ((robot_row <= 0) || (robot_row >= static_cast<int32_t>(costmap.info.height))
+     || (robot_col <= 0) || (robot_col >= static_cast<int32_t>(costmap.info.width)))
+    {
+        // Log error if robot is outside the valid range
+        RCLCPP_ERROR_THROTTLE(_node->get_logger(), *(_node->get_clock()), 1000, "Robot is outside of aggregate costmap");
+        return path;
+    }
+
+    // Add initial robot position to the path
+    path.poses.push_back(next_path_location);
+
+    int32_t row = double_map.size()/2.0;
+    int32_t col = double_map[0].size()/2.0;
+    double min_value = 1e9;
+    double current_distance_from_robot = 0.0;
+
+    bool path_complete = false;
+    while (!path_complete)
+    {
+        // Initialize next cell indices
+        int32_t col_next = col;
+        int32_t row_next = row;
+
+        // Iterate through neighboring cells
+        for (int8_t x = -1; x < 2; x++)
+        {
+            for (int8_t y = -1; y < 2; y++)
+            {
+                const double cell_value = double_map[col + x][row + y];
+
+                // Update minimum value and next path location if a better cell is found
+                if (cell_value < min_value)
+                {
+                    double new_distance_from_robot = distance(robot_row, robot_col, row + y, col + x);
+                    if (new_distance_from_robot >= current_distance_from_robot)
+                    {
+                        min_value = cell_value;
+                        col_next = col + x;
+                        row_next = row + y;
+                    }
+                }
+            }
+        }
+
+        // If no updates are made, end the path discovery
+        if (col == col_next && row == row_next)
+        {
+            path_complete = true;
+            continue;
+        }
+
+        // If reached edge of costmap, end the path discovery
+        if ((col_next <= 0) || (col_next >= static_cast<int32_t>(double_map.size()-1))
+         || (row_next <= 0) || (row_next >= static_cast<int32_t>(double_map[0].size()-1)))
+        {
+            path_complete = true;
+            continue;
+        }
+
+        // Update current cell indices
+        col = col_next;
+        row = row_next;
+
+        // Update next path location with new cell coordinates
+        next_path_location.pose.position.y = ((row - (double_map.size()/2.0)) * costmap_resolution_m_per_cell) + map_to_robot.transform.translation.y;
+        next_path_location.pose.position.x = ((col - (double_map[0].size()/2.0)) * costmap_resolution_m_per_cell) + map_to_robot.transform.translation.x;
+        next_path_location.header.stamp = _node->get_clock()->now();
+
+        // Add updated path location to the path
+        path.poses.push_back(next_path_location);
+    }
+
+    // Set timestamp for the path message and return it
+    path.header.stamp = _node->get_clock()->now();
+    return path;
+}
+
+
+
+

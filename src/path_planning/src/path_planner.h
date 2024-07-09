@@ -24,6 +24,12 @@ public:
     // Function to consume distance transform messages and clear the stored distance transform
     const std::optional<nav_msgs::msg::OccupancyGrid> consume_distance_transform_msg() { return consume<nav_msgs::msg::OccupancyGrid>(_distance_transform); }
 
+    std::optional<std::vector<std::vector<double>>> extract_double_map(nav_msgs::msg::OccupancyGrid& costmap, const geometry_msgs::msg::Pose& robot_pose);
+
+    void add_double_wave(std::vector<std::vector<double>>& costmap, double bearing_rad);
+
+    nav_msgs::msg::Path generate_double_path(const nav_msgs::msg::OccupancyGrid& costmap, const std::vector<std::vector<double>>& double_map, const geometry_msgs::msg::TransformStamped& map_to_robot);
+
 private:
     /**
      * @brief Clears the contents of the optional-type data and returns its value
