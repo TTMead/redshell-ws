@@ -50,6 +50,12 @@ void PathPlanner::occupancy_grid_callback(const nav_msgs::msg::OccupancyGrid::Sh
     if (double_costmap)
     {
         add_double_wave(*double_costmap, -yaw);
+
+        static constexpr int8_t mean_factor = 12;
+        for (int i = 0; i < mean_factor; i++)
+        {
+            mean_filter(*double_costmap);
+        }
         _path = generate_double_path(grid, *double_costmap, map_to_robot);
     }
 
@@ -274,6 +280,35 @@ nav_msgs::msg::Path PathPlanner::generate_path(const nav_msgs::msg::OccupancyGri
     path.header.stamp = _node->get_clock()->now();
     return path;
 }
+
+void PathPlanner::mean_filter(std::vector<std::vector<double>>& double_map)
+{
+    // Define wavefront distance
+    static constexpr int8_t wave_dist = 40;
+
+    // Iterate through cells around the robot within wavefront distance
+    for (int8_t x = -(wave_dist-1); x < (wave_dist-1); x++)
+    {
+        for (int8_t y = -(wave_dist-1); y < (wave_dist-1); y++)
+        {
+            const double cell_value = double_map[x + wave_dist][y + wave_dist];
+            double rolling_sum = cell_value;
+
+            // Iterate through neighboring cells
+            for (int8_t i = -1; i < 2; i++)
+            {
+                for (int8_t j = -1; j < 2; j++)
+                {
+                    const double neighbour_value = double_map[x + wave_dist + i][y + wave_dist + j];
+                    rolling_sum += neighbour_value;
+                }
+            }
+            const double neighbour_average = rolling_sum / 9.0;
+            double_map[x + wave_dist][y + wave_dist] = neighbour_average;
+        }
+    }
+}
+
 
 nav_msgs::msg::Path PathPlanner::generate_double_path(const nav_msgs::msg::OccupancyGrid& costmap, const std::vector<std::vector<double>>& double_map, const geometry_msgs::msg::TransformStamped& map_to_robot)
 {

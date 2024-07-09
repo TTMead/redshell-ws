@@ -30,6 +30,8 @@ public:
 
     nav_msgs::msg::Path generate_double_path(const nav_msgs::msg::OccupancyGrid& costmap, const std::vector<std::vector<double>>& double_map, const geometry_msgs::msg::TransformStamped& map_to_robot);
 
+    void mean_filter(std::vector<std::vector<double>>& double_map);
+
 private:
     /**
      * @brief Clears the contents of the optional-type data and returns its value
