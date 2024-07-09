@@ -36,17 +36,11 @@ ament_target_dependencies(image_capture ${dependencies})
 install(TARGETS image_capture
         DESTINATION lib/${PROJECT_NAME})
 
-# add_executable(arrow_classification src/classification/arrow_classification.cpp)
-# ament_target_dependencies(arrow_classification ${dependencies})
-# target_link_libraries(arrow_classification ${TORCH_LIBRARIES})
-# install(TARGETS arrow_classification
-#         DESTINATION lib/${PROJECT_NAME})
-
 # Resolve and install include filepaths
 include_directories(
   ${OpenCV_INCLUDE_DIRS}
+  ${TORCH_INCLUDE_DIRS}
   src
-  src/classification
 )
 
 
