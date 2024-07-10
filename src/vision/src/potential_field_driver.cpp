@@ -9,10 +9,10 @@ PotentialFieldDriver::PotentialFieldDriver() : VisionDriver("track_error_driver"
 {
     initialise_occupancy_grid_msg();
 
-    this->declare_parameter("y_pixel_to_distance_a", 328.0);
-    this->declare_parameter("y_pixel_to_distance_b", -297.0);
-    this->declare_parameter("x_pixel_to_bearing_a", 0.07094);
-    this->declare_parameter("x_pixel_to_bearing_b", -44.4039);
+    this->declare_parameter("y_pixel_to_distance_a", 138.0);
+    this->declare_parameter("y_pixel_to_distance_b", -137.0);
+    this->declare_parameter("x_pixel_to_bearing_a", 0.11);
+    this->declare_parameter("x_pixel_to_bearing_b", -32.0);
     this->declare_parameter("frame_id", "base_link");
     this->declare_parameter("field_topic", "/front_field");
     this->declare_parameter("camera_pub_topic", "/front_cam");
