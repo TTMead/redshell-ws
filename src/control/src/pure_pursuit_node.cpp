@@ -3,10 +3,10 @@
 PurePursuitParams get_pure_pursuit_params(const std::shared_ptr<rclcpp::Node>& node)
 {
     node->declare_parameter("path_topic", "path");
-    node->declare_parameter("look_ahead_dist_m", 0.3);
+    node->declare_parameter("look_ahead_dist_m", 0.1);
     node->declare_parameter("yaw_gain", 0.1);
     node->declare_parameter("max_yaw_rate", 1.0);
-    node->declare_parameter("forward_velocity", 0.1);
+    node->declare_parameter("forward_velocity", 0.3);
     return {
         node->get_parameter("path_topic").as_string(),
         node->get_parameter("look_ahead_dist_m").as_double(),
