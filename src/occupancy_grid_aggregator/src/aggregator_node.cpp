@@ -30,7 +30,7 @@ int main(int argc, char * argv[])
     });
 
     // Regularly filter the aggregate grid
-	auto filter_timer = node->create_wall_timer(std::chrono::milliseconds(500), std::bind(&Aggregator::filter_costmap, &aggregator));
+	auto filter_timer = node->create_wall_timer(std::chrono::milliseconds(200), std::bind(&Aggregator::filter_costmap, &aggregator));
 
     // Initialise the grid resetting service
     auto reset_aggregate_grid_service = node->create_service<occupancy_grid_aggregator_srv::srv::ResetAggregateGrid>("reset_aggregate_grid",
